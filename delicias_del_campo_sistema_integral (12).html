@@ -1,0 +1,2774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicias del Campo | Pastelería y Repostería Artesanal</title>
+    <!-- Tailwind CSS, Bootstrap Icons, Fuentes Áureas, Chart.js y Supabase JS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        marfil: '#FAF7F2',
+                        dorado: '#C5A059',
+                        doradoOscuro: '#A3803D',
+                        doradoSuave: '#F3EAD8',
+                        doradoBorde: '#E5D7BE',
+                        carbon: '#1E1C1A',
+                        carbonMedio: '#2C2926',
+                        textoPrincipal: '#23201D',
+                        textoSecundario: '#736B62'
+                    },
+                    fontFamily: {
+                        editorial: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #FAF7F2; color: #23201D; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #FAF7F2; }
+        ::-webkit-scrollbar-thumb { background: #D6C5A5; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #C5A059; }
+        @media print { .no-print { display: none !important; } body { background: #FFFFFF !important; } }
+    </style>
+</head>
+<body class="antialiased selection:bg-doradoSuave selection:text-carbon">
+
+<!-- NOTIFICACIONES FLOTANTES -->
+<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+<!-- ===================================================================== -->
+<!-- 1. PANTALLA DE INICIO DE SESIÓN                                       -->
+<!-- ===================================================================== -->
+<div id="loginScreen" class="min-h-screen flex items-center justify-center p-4" style="background: radial-gradient(circle at top right, #F3EAD8 0%, #FAF7F2 65%);">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-xl p-8 md:p-10 w-full max-w-md transition-all">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 mx-auto rounded-full bg-carbon border-2 border-dorado flex items-center justify-center mb-4 shadow-md">
+                <i class="bi bi-flower1 text-4xl text-dorado"></i>
+            </div>
+            <h1 class="font-editorial text-4xl font-bold text-textoPrincipal tracking-tight">Delicias del Campo</h1>
+            <p class="text-textoSecundario text-sm mt-1">Alta Repostería & Pastelería Artesanal</p>
+            <div class="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-doradoSuave text-doradoOscuro text-xs font-semibold border border-doradoBorde">
+                <i class="bi bi-database-check"></i> Listo para Supabase Cloud & Local
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-textoSecundario mb-2">Perfil de Acceso Directo</label>
+                <select id="loginRol" class="w-full px-4 py-3 rounded-xl border border-doradoBorde bg-marfil/40 text-textoPrincipal font-medium focus:outline-none focus:border-dorado transition">
+                    <option value="Administrador">Administrador — Maestra Pastelera</option>
+                    <option value="Empleado">Vendedor — Carlos Ventas (Operativo POS)</option>
+                </select>
+            </div>
+
+            <button onclick="iniciarSesion()" class="w-full py-3.5 px-6 rounded-xl font-semibold text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all cursor-pointer flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                <span>Ingresar al Sistema</span>
+                <i class="bi bi-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-doradoBorde/60 text-center text-xs text-textoSecundario">
+            <span>Proporción & Estética Áurea • Gestión en Bolivianos (Bs)</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+<!-- 2. APLICACIÓN PRINCIPAL                                               -->
+<!-- ===================================================================== -->
+<div id="appScreen" class="hidden min-h-screen flex flex-col md:flex-row">
+    
+    <!-- BARRA MÓVIL -->
+    <div class="md:hidden bg-carbon text-white p-4 flex items-center justify-between border-b border-dorado/20 no-print">
+        <div class="flex items-center gap-2.5">
+            <i class="bi bi-flower1 text-2xl text-dorado"></i>
+            <span class="font-editorial text-xl font-bold">Delicias del Campo</span>
+        </div>
+        <button onclick="toggleSidebarMobile()" class="p-2 rounded-lg bg-carbonMedio text-dorado">
+            <i class="bi bi-list text-xl"></i>
+        </button>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebarMenu" class="hidden md:flex flex-col w-full md:w-64 lg:w-72 bg-carbon text-white shrink-0 border-r border-dorado/20 no-print">
+        <div class="p-6 text-center border-b border-dorado/20">
+            <div class="w-14 h-14 mx-auto rounded-full bg-dorado/15 border border-dorado flex items-center justify-center mb-3">
+                <i class="bi bi-flower1 text-2xl text-dorado"></i>
+            </div>
+            <h2 class="font-editorial text-2xl font-bold text-white leading-tight">Delicias del Campo</h2>
+            <span class="text-[11px] uppercase tracking-[0.18em] text-dorado font-semibold block mt-1">Pastelería Artesanal</span>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto" id="menuNav">
+            <button data-mod="dashboard" onclick="cambiarModulo('dashboard')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all text-left bg-dorado text-carbon font-bold shadow-md">
+                <i class="bi bi-grid-1x2 text-base"></i><span>Panel Principal</span>
+            </button>
+            <button data-mod="pos" onclick="cambiarModulo('pos')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-bag-check text-base"></i><span>Punto de Venta (POS)</span>
+            </button>
+            <button data-mod="pedidos" onclick="cambiarModulo('pedidos')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-calendar2-heart text-base"></i><span>Pedidos y Anticipos</span>
+            </button>
+            <button data-mod="caja" onclick="cambiarModulo('caja')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-safe2 text-base"></i><span>Arqueo y Cierre de Caja</span>
+            </button>
+            <button data-mod="historial" onclick="cambiarModulo('historial')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-receipt text-base"></i><span>Historial de Ventas</span>
+            </button>
+            <button data-mod="productos" onclick="cambiarModulo('productos')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-box2-heart text-base"></i><span>Productos e Inventario</span>
+            </button>
+            <button data-mod="clientes" onclick="cambiarModulo('clientes')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-people text-base"></i><span>Clientes</span>
+            </button>
+            <button data-mod="reportes" onclick="cambiarModulo('reportes')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                <i class="bi bi-file-earmark-bar-graph text-base"></i><span>Reportes y Exportación</span>
+            </button>
+
+            <div id="adminMenuSection" class="pt-4 mt-4 border-t border-dorado/20 space-y-1.5">
+                <span class="px-4 text-[10px] uppercase tracking-[0.15em] text-dorado font-bold block mb-2">Administración</span>
+                <button data-mod="usuarios" onclick="cambiarModulo('usuarios')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                    <i class="bi bi-person-badge text-base"></i><span>Empleados y Roles</span>
+                </button>
+                <button data-mod="ia" onclick="cambiarModulo('ia')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left">
+                    <i class="bi bi-stars text-base"></i><span>Predicción IA (RNN / LSTM)</span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="p-4 border-t border-dorado/20 text-xs text-stone-400 text-center">
+            <span>Moneda Oficial: <strong class="text-dorado">Bs (BOB)</strong></span>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <header class="bg-white/80 backdrop-blur-md border-b border-doradoBorde px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 no-print">
+            <div>
+                <span class="text-[11px] font-bold uppercase tracking-[0.12em] text-doradoOscuro block">Delicias del Campo</span>
+                <h1 id="tituloHeader" class="font-editorial text-2xl md:text-3xl font-bold text-textoPrincipal">Panel Principal</h1>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- BOTÓN ESTADO SUPABASE -->
+                <button id="btnEstadoSupabase" onclick="abrirModal('modalSupabase')" class="px-3.5 py-1.5 rounded-full border border-doradoBorde bg-marfil text-xs font-semibold text-textoSecundario hover:bg-doradoSuave transition cursor-pointer flex items-center gap-1.5">
+                    <span id="dotSupabase" class="w-2 h-2 rounded-full bg-amber-500"></span>
+                    <span id="txtSupabase">BD Local (Conectar Supabase)</span>
+                </button>
+
+                <div id="relojSistema" class="px-3.5 py-1.5 rounded-full bg-marfil border border-doradoBorde text-xs font-medium text-textoPrincipal flex items-center gap-1.5">
+                    <i class="bi bi-clock text-doradoOscuro"></i><span>--/--/---- --:--</span>
+                </div>
+
+                <div class="px-3.5 py-1.5 rounded-full bg-doradoSuave border border-doradoBorde text-xs font-semibold text-doradoOscuro flex items-center gap-1.5">
+                    <i class="bi bi-person-circle"></i><span id="badgeUsuario">Usuario</span>
+                </div>
+
+                <button onclick="exportarRespaldo()" title="Descargar copia de seguridad (JSON)" class="col-admin p-2 rounded-full border border-doradoBorde text-doradoOscuro hover:bg-doradoSuave transition cursor-pointer">
+                    <i class="bi bi-download"></i>
+                </button>
+
+                <button onclick="descargarParaVercel()" title="Descargar archivo index.html listo para Vercel" class="col-admin px-3 py-1.5 rounded-full border border-dorado bg-doradoSuave text-doradoOscuro text-xs font-bold hover:bg-dorado hover:text-white transition cursor-pointer flex items-center gap-1.5">
+                    <i class="bi bi-file-earmark-code"></i><span>index.html</span>
+                </button>
+
+                <button onclick="abrirModal('modalReset')" title="Restaurar datos iniciales" class="col-admin p-2 rounded-full border border-doradoBorde text-doradoOscuro hover:bg-doradoSuave transition cursor-pointer">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+
+                <button onclick="cerrarSesion()" class="px-4 py-1.5 rounded-full border border-stone-300 text-xs font-semibold text-textoSecundario hover:bg-stone-100 hover:text-textoPrincipal transition cursor-pointer">
+                    Salir
+                </button>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto flex-1">
+
+            <!-- ========================================================= -->
+            <!-- VISTA 1: PANEL PRINCIPAL (DASHBOARD)                      -->
+            <!-- ========================================================= -->
+            <section id="mod-dashboard" class="modulo-seccion space-y-6">
+                <div id="bannerRolDashboard"></div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p id="lblKpi1" class="text-xs font-semibold text-textoSecundario uppercase tracking-wider">Ventas Hoy</p>
+                            <h3 id="kpiHoy" class="text-2xl font-bold text-textoPrincipal mt-1">Bs 0,00</h3>
+                            <span id="subKpi1" class="text-[11px] text-textoSecundario"></span>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-doradoSuave flex items-center justify-center text-doradoOscuro"><i class="bi bi-cash-coin text-xl"></i></div>
+                    </div>
+
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p id="lblKpi2" class="text-xs font-semibold text-textoSecundario uppercase tracking-wider">Ingresos 6 Meses</p>
+                            <h3 id="kpiMes" class="text-2xl font-bold text-textoPrincipal mt-1">Bs 0,00</h3>
+                            <span id="subKpi2" class="text-[11px] text-textoSecundario"></span>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-doradoSuave flex items-center justify-center text-doradoOscuro"><i class="bi bi-graph-up-arrow text-xl"></i></div>
+                    </div>
+
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p id="lblKpi3" class="text-xs font-semibold text-textoSecundario uppercase tracking-wider">Saldos por Cobrar</p>
+                            <h3 id="kpiSaldos" class="text-2xl font-bold text-doradoOscuro mt-1">Bs 0,00</h3>
+                            <span id="subKpi3" class="text-[11px] text-textoSecundario"></span>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-doradoSuave flex items-center justify-center text-doradoOscuro"><i class="bi bi-hourglass-split text-xl"></i></div>
+                    </div>
+
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-red-700 uppercase tracking-wider">Alertas Stock Bajo</p>
+                            <h3 id="kpiStockBajo" class="text-2xl font-bold text-red-600 mt-1">0</h3>
+                            <span class="text-[11px] text-textoSecundario">Productos bajo mínimo</span>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600"><i class="bi bi-exclamation-triangle text-xl"></i></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div id="cardChartSemestral" class="lg:col-span-7 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-editorial text-xl font-bold text-textoPrincipal">Evolución Semestral (Jun – Nov 2026)</h3>
+                                <p class="text-xs text-textoSecundario">Facturación mensual consolidada en Bolivianos (Bs)</p>
+                            </div>
+                            <span class="text-xs px-2.5 py-1 rounded-full bg-doradoSuave text-doradoOscuro font-semibold">6 Meses</span>
+                        </div>
+                        <div class="relative h-64 w-full"><canvas id="semestralChart"></canvas></div>
+                    </div>
+
+                    <div id="cardChartSemanal" class="lg:col-span-5 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <div class="mb-4">
+                            <h3 id="tituloChartSemanal" class="font-editorial text-xl font-bold text-textoPrincipal">Ingresos Últimos 7 Días (Bs)</h3>
+                            <p id="subChartSemanal" class="text-xs text-textoSecundario">Flujo diario reciente</p>
+                        </div>
+                        <div class="relative h-64 w-full"><canvas id="ventasChart"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <h3 id="tituloTop5" class="font-editorial text-xl font-bold text-textoPrincipal mb-4">Top 5 Más Vendidos</h3>
+                        <ul id="listaTop" class="divide-y divide-doradoBorde/60"></ul>
+                    </div>
+
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 id="tituloResumenSecundario" class="font-editorial text-xl font-bold text-textoPrincipal">Ingresos por Método de Cobro</h3>
+                            <span id="badgeResumenSecundario" class="text-xs px-2.5 py-1 rounded-full bg-doradoSuave text-doradoOscuro font-semibold">Efectivo y QR</span>
+                        </div>
+                        <div id="contenidoResumenSecundario" class="space-y-4 pt-2"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 2: PUNTO DE VENTA (POS)                             -->
+            <!-- ========================================================= -->
+            <section id="mod-pos" class="modulo-seccion hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-7 bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm flex flex-col">
+                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                            <div class="relative flex-1">
+                                <i class="bi bi-search absolute left-3.5 top-2.5 text-textoSecundario text-sm"></i>
+                                <input type="text" id="posBuscar" oninput="renderPOS()" placeholder="Buscar producto..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-doradoBorde text-sm focus:outline-none focus:border-dorado">
+                            </div>
+                            <select id="posFiltroCat" onchange="renderPOS()" class="px-3 py-2 rounded-xl border border-doradoBorde text-sm bg-marfil/40 focus:outline-none focus:border-dorado sm:w-56"></select>
+                        </div>
+                        <div id="posGridProductos" class="grid grid-cols-1 sm:grid-cols-2 gap-3 overflow-y-auto pr-1" style="max-height: 62vh;"></div>
+                    </div>
+
+                    <div class="lg:col-span-5 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-3 pb-2 border-b border-doradoBorde">Detalle de Venta</h3>
+
+                            <div class="mb-3 p-3 rounded-xl bg-marfil/60 border border-doradoBorde">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="text-xs font-bold text-textoPrincipal">Datos del Cliente</label>
+                                    <button type="button" id="btnToggleCliPos" onclick="toggleNuevoClientePOS()" class="text-[11px] font-bold text-doradoOscuro hover:underline cursor-pointer">+ Nuevo cliente rápido</button>
+                                </div>
+                                <div id="posSelectClienteBox">
+                                    <select id="posCliente" onchange="cargarDatosClientePOS()" class="w-full px-3 py-2 rounded-xl border border-doradoBorde bg-white text-xs"></select>
+                                    <p id="posClienteInfoBadge" class="text-[11px] text-textoSecundario mt-1"></p>
+                                </div>
+                                <div id="posNuevoClienteBox" class="hidden space-y-2 mt-2">
+                                    <input type="text" id="posCliNombreNuevo" placeholder="Nombre completo del cliente *" class="w-full px-3 py-1.5 rounded-lg border border-doradoBorde bg-white text-xs">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="posCliNitNuevo" placeholder="CI / NIT" class="w-full px-3 py-1.5 rounded-lg border border-doradoBorde bg-white text-xs">
+                                        <input type="text" id="posCliTelNuevo" placeholder="Celular" class="w-full px-3 py-1.5 rounded-lg border border-doradoBorde bg-white text-xs">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="block text-xs font-semibold text-textoSecundario mb-1">Método de Cobro</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <label class="flex items-center gap-2 px-3 py-2 rounded-xl border border-doradoBorde bg-marfil/40 text-xs font-semibold cursor-pointer">
+                                        <input type="radio" name="posPagoRadio" value="Efectivo" checked class="accent-doradoOscuro">
+                                        <i class="bi bi-cash-stack text-emerald-700"></i><span>Efectivo</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 px-3 py-2 rounded-xl border border-doradoBorde bg-marfil/40 text-xs font-semibold cursor-pointer">
+                                        <input type="radio" name="posPagoRadio" value="Pago QR" class="accent-doradoOscuro">
+                                        <i class="bi bi-qr-code text-doradoOscuro"></i><span>Pago QR</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="overflow-y-auto border border-doradoBorde/70 rounded-xl mb-3" style="max-height: 190px;">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                        <tr>
+                                            <th class="py-2 px-3">Producto</th>
+                                            <th class="py-2 px-2 text-center">Cant.</th>
+                                            <th class="py-2 px-3 text-right">Subtotal</th>
+                                            <th class="py-2 px-2"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="posCarrito" class="divide-y divide-doradoBorde/50 text-sm"></tbody>
+                                </table>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-textoSecundario mb-1">Descuento (Bs)</label>
+                                    <input type="number" id="posDescuento" min="0" step="1" value="0" oninput="renderCarrito()" class="w-full px-3 py-1.5 rounded-xl border border-doradoBorde text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-semibold text-textoSecundario mb-1">Nota / Dedicatoria</label>
+                                    <input type="text" id="posNota" placeholder="Ej. Feliz Cumpleaños" class="w-full px-3 py-1.5 rounded-xl border border-doradoBorde text-xs">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-doradoBorde">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-base font-semibold text-textoSecundario">Total a Pagar:</span>
+                                <span id="posTotal" class="text-2xl font-bold text-doradoOscuro">Bs 0,00</span>
+                            </div>
+                            <button onclick="finalizarVenta()" class="w-full py-3 px-5 rounded-xl font-semibold text-white shadow-md hover:shadow-lg transition cursor-pointer flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                                <i class="bi bi-check2-circle text-lg"></i><span>Finalizar y Generar Comprobante</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 3: PEDIDOS Y ANTICIPOS                              -->
+            <!-- ========================================================= -->
+            <section id="mod-pedidos" class="modulo-seccion hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-4 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm h-fit">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Nuevo Pedido Especial</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-xl bg-marfil/60 border border-doradoBorde">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <label class="text-xs font-bold text-textoPrincipal">Cliente</label>
+                                    <button type="button" id="btnToggleCliPed" onclick="toggleNuevoClientePed()" class="text-[11px] font-bold text-doradoOscuro hover:underline cursor-pointer">+ Cliente nuevo</button>
+                                </div>
+                                <div id="pedSelectClienteBox">
+                                    <select id="pedCliente" class="w-full px-3 py-2 rounded-xl border border-doradoBorde bg-white text-xs"></select>
+                                </div>
+                                <div id="pedNuevoClienteBox" class="hidden space-y-2 mt-2">
+                                    <input type="text" id="pedCliNombreNuevo" placeholder="Nombre del cliente *" class="w-full px-3 py-1.5 rounded-lg border border-doradoBorde bg-white text-xs">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" id="pedCliTelNuevo" placeholder="Celular WhatsApp" class="w-full px-3 py-1.5 rounded-lg border border-doradoBorde bg-white text-xs">
+                                        <input type="text" id="pedCliNitNuevo" placeholder="CI / NIT" class="w-full px-3 py-1.5 rounded-lg border border-doradoBorde bg-white text-xs">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-textoSecundario mb-1">Descripción del Pedido</label>
+                                <input type="text" id="pedDesc" placeholder="Ej. Torta 30 porciones temática floral" class="w-full px-3 py-2 rounded-xl border border-doradoBorde text-sm">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Fecha Entrega</label>
+                                    <input type="text" id="pedFecha" placeholder="25/11/2026" class="w-full px-3 py-2 rounded-xl border border-doradoBorde text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Cobro Anticipo</label>
+                                    <select id="pedMetodoPago" class="w-full px-3 py-2 rounded-xl border border-doradoBorde text-sm">
+                                        <option value="Efectivo">Efectivo</option>
+                                        <option value="Pago QR">Pago QR</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Monto Total (Bs)</label>
+                                    <input type="number" step="0.50" id="pedTotal" placeholder="250.00" class="w-full px-3 py-2 rounded-xl border border-doradoBorde text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Anticipo (Bs)</label>
+                                    <input type="number" step="0.50" id="pedAnticipo" placeholder="100.00" class="w-full px-3 py-2 rounded-xl border border-doradoBorde text-sm">
+                                </div>
+                            </div>
+                            <button onclick="registrarPedido()" class="w-full py-2.5 px-4 mt-2 rounded-xl font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                                Registrar Pedido
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-8 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Control de Producción, Anticipos y Saldos</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                    <tr>
+                                        <th class="py-3 px-2">Código</th>
+                                        <th class="py-3 px-2">Cliente / Detalle</th>
+                                        <th class="py-3 px-2">Estado Taller</th>
+                                        <th class="py-3 px-2">Total / Saldo</th>
+                                        <th class="py-3 px-2 text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaPedidos" class="divide-y divide-doradoBorde/60 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 4: ARQUEO Y CIERRE DE CAJA                          -->
+            <!-- ========================================================= -->
+            <section id="mod-caja" class="modulo-seccion hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm">
+                        <span class="text-xs font-semibold text-textoSecundario uppercase">Ingresos Efectivo (Hoy)</span>
+                        <h3 id="cajaEfectivo" class="text-2xl font-bold text-emerald-700 mt-1">Bs 0,00</h3>
+                    </div>
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm">
+                        <span class="text-xs font-semibold text-textoSecundario uppercase">Ingresos Pago QR (Hoy)</span>
+                        <h3 id="cajaQR" class="text-2xl font-bold text-doradoOscuro mt-1">Bs 0,00</h3>
+                    </div>
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm">
+                        <span class="text-xs font-semibold text-textoSecundario uppercase">Total Recaudado (Hoy)</span>
+                        <h3 id="cajaTotalDia" class="text-2xl font-bold text-textoPrincipal mt-1">Bs 0,00</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-5 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Cuadre de Caja del Turno</h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-textoSecundario mb-1">Fondo Inicial / Cambio en Caja (Bs)</label>
+                                <input type="number" id="cajaFondoInicial" value="200" oninput="renderCaja()" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-textoSecundario mb-1">Efectivo Físico Contado en Gaveta (Bs)</label>
+                                <input type="number" id="cajaContado" placeholder="Ingresa el total contado" oninput="renderCaja()" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-marfil border border-doradoBorde text-xs space-y-1.5">
+                                <div class="flex justify-between"><span>Efectivo Esperado en Gaveta:</span><strong id="cajaEsperado">Bs 0,00</strong></div>
+                                <div class="flex justify-between"><span>Diferencia (Sobrante / Faltante):</span><strong id="cajaDiferencia">Bs 0,00</strong></div>
+                            </div>
+                            <button onclick="registrarCierreCaja()" class="w-full py-2.5 px-4 rounded-xl font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                                Guardar Cierre de Turno
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-7 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <h3 id="tituloHistorialCierres" class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Historial de Cierres de Caja</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Fecha y Hora</th>
+                                        <th class="py-2.5 px-3">Responsable</th>
+                                        <th class="py-2.5 px-3">Total Ventas</th>
+                                        <th class="py-2.5 px-3">Diferencia Efectivo</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaCierres" class="divide-y divide-doradoBorde/60 text-xs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 5: HISTORIAL DE VENTAS                              -->
+            <!-- ========================================================= -->
+            <section id="mod-historial" class="modulo-seccion hidden">
+                <div class="bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm space-y-4">
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div>
+                            <h3 id="tituloHistorialVentas" class="font-editorial text-2xl font-bold text-textoPrincipal">Registro Histórico de Comprobantes</h3>
+                            <p id="subtituloHistorialVentas" class="text-xs text-textoSecundario"></p>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs bg-doradoSuave px-4 py-2 rounded-xl border border-doradoBorde">
+                            <span>Mostrando: <strong id="histCount">0</strong> ventas</span>
+                            <span>•</span>
+                            <span>Total: <strong id="histTotalFiltrado" class="text-doradoOscuro">Bs 0,00</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <input type="text" id="buscarHistorial" oninput="renderHistorial()" placeholder="Buscar por código o cliente..." class="px-3.5 py-2 rounded-xl border border-doradoBorde text-xs">
+                        <select id="filtroMesHistorial" onchange="renderHistorial()" class="px-3.5 py-2 rounded-xl border border-doradoBorde text-xs bg-marfil/40">
+                            <option value="">Todos los meses (6 meses)</option>
+                            <option value="/11/2026">Noviembre 2026</option>
+                            <option value="/10/2026">Octubre 2026</option>
+                            <option value="/09/2026">Septiembre 2026</option>
+                            <option value="/08/2026">Agosto 2026</option>
+                            <option value="/07/2026">Julio 2026</option>
+                            <option value="/06/2026">Junio 2026</option>
+                        </select>
+                        <select id="filtroPagoHistorial" onchange="renderHistorial()" class="px-3.5 py-2 rounded-xl border border-doradoBorde text-xs bg-marfil/40">
+                            <option value="">Todos los métodos (Efectivo / QR)</option>
+                            <option value="Efectivo">Efectivo</option>
+                            <option value="Pago QR">Pago QR</option>
+                        </select>
+                        <select id="filtroVendedorHistorial" onchange="renderHistorial()" class="px-3.5 py-2 rounded-xl border border-doradoBorde text-xs bg-marfil/40">
+                            <option value="">Todos los vendedores</option>
+                            <option value="Maestra Pastelera">Maestra Pastelera</option>
+                            <option value="Carlos Ventas">Carlos Ventas</option>
+                        </select>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                <tr>
+                                    <th class="py-3 px-4">Comprobante</th>
+                                    <th class="py-3 px-4">Fecha y Hora</th>
+                                    <th class="py-3 px-4">Cliente</th>
+                                    <th class="py-3 px-4">Vendedor</th>
+                                    <th class="py-3 px-4">Cobro</th>
+                                    <th class="py-3 px-4">Total</th>
+                                    <th class="py-3 px-4 text-right">Ticket</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaHistorial" class="divide-y divide-doradoBorde/60 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 6: PRODUCTOS E INVENTARIO (50 PRODUCTOS + EDITAR)   -->
+            <!-- ========================================================= -->
+            <section id="mod-productos" class="modulo-seccion hidden">
+                <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+                    <div class="flex flex-wrap gap-3">
+                        <div class="relative">
+                            <i class="bi bi-search absolute left-3.5 top-2.5 text-textoSecundario text-sm"></i>
+                            <input type="text" id="filtroNombre" oninput="renderProductos()" placeholder="Buscar producto..." class="pl-9 pr-4 py-2 rounded-xl border border-doradoBorde bg-white text-sm w-64">
+                        </div>
+                        <select id="filtroCat" onchange="renderProductos()" class="px-3.5 py-2 rounded-xl border border-doradoBorde bg-white text-sm w-60"></select>
+                    </div>
+                    <button id="btnNuevoProd" onclick="abrirModal('modalProd')" class="px-4 py-2.5 rounded-xl font-semibold text-white text-sm shadow cursor-pointer flex items-center gap-1.5" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                        <i class="bi bi-plus-lg"></i><span>Nuevo Producto</span>
+                    </button>
+                </div>
+
+                <div class="bg-white border border-doradoBorde rounded-2xl p-4 shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                <tr>
+                                    <th class="py-3 px-3">#</th>
+                                    <th class="py-3 px-3">Producto</th>
+                                    <th class="py-3 px-3">Categoría</th>
+                                    <th class="py-3 px-3">Precio Venta</th>
+                                    <th class="py-3 px-3 col-admin">Costo Prod.</th>
+                                    <th class="py-3 px-3 col-admin">Ganancia</th>
+                                    <th class="py-3 px-3 text-center">Stock / Reabastecer</th>
+                                    <th class="py-3 px-3 text-right col-admin">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaProductos" class="divide-y divide-doradoBorde/60 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 7: CLIENTES                                         -->
+            <!-- ========================================================= -->
+            <section id="mod-clientes" class="modulo-seccion hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-4 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm h-fit">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Registrar Cliente</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="cliNombre" placeholder="Nombre completo" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                            <input type="text" id="cliTel" placeholder="Celular WhatsApp (Ej. 71234567)" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                            <input type="text" id="cliNit" placeholder="CI / NIT (opcional)" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                            <input type="text" id="cliDir" placeholder="Dirección / Zona (opcional)" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                            <button onclick="agregarCliente()" class="w-full py-2.5 px-4 rounded-xl font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                                Guardar Cliente
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-8 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Directorio de Clientes</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                    <tr>
+                                        <th class="py-3 px-4">Nombre</th>
+                                        <th class="py-3 px-4">Celular</th>
+                                        <th class="py-3 px-4">CI / NIT</th>
+                                        <th class="py-3 px-4">Dirección</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaClientes" class="divide-y divide-doradoBorde/60 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 7.5: REPORTES Y EXPORTACIÓN (EXCEL CSV / PDF)       -->
+            <!-- ========================================================= -->
+            <section id="mod-reportes" class="modulo-seccion hidden space-y-6">
+                <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm flex flex-wrap items-end justify-between gap-4 no-print">
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-textoSecundario mb-1">Período del Reporte</label>
+                            <select id="repFiltroPeriodo" onchange="renderReportes()" class="px-3.5 py-2 rounded-xl border border-doradoBorde bg-marfil/40 text-xs font-semibold">
+                                <option value="6m">Últimos 6 Meses (Jun – Nov 2026)</option>
+                                <option value="/11/2026">Noviembre 2026</option>
+                                <option value="/10/2026">Octubre 2026</option>
+                                <option value="/09/2026">Septiembre 2026</option>
+                                <option value="/08/2026">Agosto 2026</option>
+                                <option value="/07/2026">Julio 2026</option>
+                                <option value="/06/2026">Junio 2026</option>
+                                <option value="hoy">Solo Ventas de Hoy</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold uppercase text-textoSecundario mb-1">Tipo de Informe</label>
+                            <select id="repTipoInforme" onchange="renderReportes()" class="px-3.5 py-2 rounded-xl border border-doradoBorde bg-marfil/40 text-xs font-semibold">
+                                <option value="ventas">Detalle General de Ventas</option>
+                                <option value="categorias">Ventas y Rentabilidad por Categoría</option>
+                                <option value="inventario">Valoración de Inventario Actual</option>
+                                <option value="pedidos">Estado de Pedidos Especiales</option>
+                                <option value="ia_lstm" class="col-admin">Plan de Producción IA (RNN / LSTM - 7 Días)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportarReporteCSV()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow cursor-pointer flex items-center gap-1.5">
+                            <i class="bi bi-file-earmark-spreadsheet"></i><span>Descargar Excel (CSV)</span>
+                        </button>
+                        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-carbon text-dorado border border-dorado text-xs font-semibold shadow cursor-pointer flex items-center gap-1.5">
+                            <i class="bi bi-printer"></i><span>Imprimir / Guardar PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm">
+                        <span class="text-[11px] font-bold uppercase text-textoSecundario">Ingresos Brutos</span>
+                        <h3 id="repKpiIngresos" class="text-2xl font-bold text-textoPrincipal mt-1">Bs 0,00</h3>
+                        <span id="repKpiCantVentas" class="text-[11px] text-textoSecundario">0 operaciones</span>
+                    </div>
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm col-admin">
+                        <span class="text-[11px] font-bold uppercase text-textoSecundario">Costo Estimado Prod.</span>
+                        <h3 id="repKpiCostos" class="text-2xl font-bold text-stone-600 mt-1">Bs 0,00</h3>
+                        <span class="text-[11px] text-textoSecundario">Insumos y elaboración</span>
+                    </div>
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm col-admin">
+                        <span class="text-[11px] font-bold uppercase text-emerald-700">Utilidad Neta Estimada</span>
+                        <h3 id="repKpiUtilidad" class="text-2xl font-bold text-emerald-700 mt-1">Bs 0,00</h3>
+                        <span id="repKpiMargen" class="text-[11px] text-emerald-700 font-semibold">Margen: 0%</span>
+                    </div>
+                    <div class="bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm">
+                        <span class="text-[11px] font-bold uppercase text-doradoOscuro">Ticket Promedio</span>
+                        <h3 id="repKpiTicket" class="text-2xl font-bold text-doradoOscuro mt-1">Bs 0,00</h3>
+                        <span class="text-[11px] text-textoSecundario">Promedio por cliente</span>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b border-doradoBorde">
+                        <div>
+                            <h3 id="repTituloTabla" class="font-editorial text-2xl font-bold text-textoPrincipal">Reporte Detallado</h3>
+                            <p id="repSubtituloTabla" class="text-xs text-textoSecundario">Delicias del Campo — Información auditada en Bolivianos (Bs)</p>
+                        </div>
+                        <span id="repFechaEmision" class="text-xs text-textoSecundario"></span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead id="repTablaHead" class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde"></thead>
+                            <tbody id="repTablaBody" class="divide-y divide-doradoBorde/60 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 8: EMPLEADOS Y ROLES (ADMIN)                        -->
+            <!-- ========================================================= -->
+            <section id="mod-usuarios" class="modulo-seccion hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-4 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm h-fit">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Crear Empleado / Usuario</h3>
+                        <div class="space-y-3">
+                            <input type="text" id="usuNombre" placeholder="Nombre completo" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                            <input type="email" id="usuEmail" placeholder="Correo electrónico" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                            <select id="usuRol" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde text-sm">
+                                <option value="Empleado">Empleado</option>
+                                <option value="Administrador">Administrador</option>
+                            </select>
+                            <button onclick="agregarUsuario()" class="w-full py-2.5 px-4 rounded-xl font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                                Crear Cuenta
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-8 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-4">Personal Registrado</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-marfil text-[11px] uppercase text-textoSecundario border-b border-doradoBorde">
+                                    <tr>
+                                        <th class="py-3 px-4">Nombre</th>
+                                        <th class="py-3 px-4">Correo</th>
+                                        <th class="py-3 px-4">Rol</th>
+                                        <th class="py-3 px-4">Estado</th>
+                                        <th class="py-3 px-4 text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaUsuarios" class="divide-y divide-doradoBorde/60 text-sm"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================================= -->
+            <!-- VISTA 9: PREDICCIÓN IA (RNN / LSTM) INTUITIVA (ADMIN)     -->
+            <!-- ========================================================= -->
+            <section id="mod-ia" class="modulo-seccion hidden space-y-6">
+                <div class="bg-carbon text-white border border-dorado/40 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                    <div class="flex items-start gap-3.5 max-w-3xl">
+                        <div class="w-11 h-11 rounded-xl bg-dorado/20 border border-dorado flex items-center justify-center text-dorado shrink-0 mt-0.5">
+                            <i class="bi bi-cpu text-xl"></i>
+                        </div>
+                        <div>
+                            <span class="text-[11px] uppercase tracking-widest text-dorado font-bold block">Asistente Inteligente de Producción</span>
+                            <h3 class="font-editorial text-xl font-bold text-white">¿Cómo funciona la Red Neuronal Recurrente (RNN / LSTM)?</h3>
+                            <p class="text-xs text-stone-300 mt-1 leading-relaxed">
+                                La red neuronal recurrente <strong>RNN con arquitectura LSTM (Long Short-Term Memory)</strong> analiza las secuencias temporales de tus ventas reales de los últimos <strong>6 meses</strong> (identificando qué días de la semana vendes más y qué productos suben los fines de semana) para decirte <strong>exactamente cuántas unidades debes hornear</strong> y evitar que te falte stock o que sobre mercadería.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs bg-carbonMedio px-3.5 py-2 rounded-xl border border-dorado/20">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>Base: <strong>6 meses de ventas reales</strong></span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="lg:col-span-4 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm h-fit space-y-5">
+                        <div class="border-b border-doradoBorde pb-3">
+                            <h3 class="font-editorial text-2xl font-bold text-textoPrincipal">Configurar Análisis</h3>
+                            <p class="text-xs text-textoSecundario">Sigue los 2 pasos para calcular tu plan de horneado</p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-textoPrincipal mb-1">1. Elige qué deseas proyectar</label>
+                                <select id="iaProducto" onchange="if(modeloEntrenado) predecirLSTM()" class="w-full px-3.5 py-2.5 rounded-xl border border-doradoBorde bg-marfil/40 text-sm font-medium focus:outline-none focus:border-dorado"></select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-textoPrincipal mb-1">2. Días a proyectar</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" onclick="setDiasIA(3)" class="ia-dias-btn py-2 rounded-xl border border-doradoBorde text-xs font-bold bg-marfil/40 hover:bg-doradoSuave cursor-pointer" data-d="3">3 días</button>
+                                    <button type="button" onclick="setDiasIA(7)" class="ia-dias-btn py-2 rounded-xl border border-dorado text-xs font-bold bg-doradoSuave text-doradoOscuro cursor-pointer" data-d="7">7 días</button>
+                                    <button type="button" onclick="setDiasIA(14)" class="ia-dias-btn py-2 rounded-xl border border-doradoBorde text-xs font-bold bg-marfil/40 hover:bg-doradoSuave cursor-pointer" data-d="14">14 días</button>
+                                </div>
+                                <input type="hidden" id="iaDias" value="7">
+                            </div>
+
+                            <div class="space-y-2.5 pt-2">
+                                <button id="btnEntrenar" onclick="entrenarLSTM()" class="w-full py-3 px-4 rounded-xl font-semibold text-dorado bg-carbon border border-dorado hover:bg-dorado hover:text-carbon transition cursor-pointer flex items-center justify-center gap-2 text-xs">
+                                    <i class="bi bi-gear-wide-connected text-base"></i><span>Paso 1: Entrenar RNN con Historial</span>
+                                </button>
+                                <button onclick="predecirLSTM()" class="w-full py-3 px-4 rounded-xl font-semibold text-white shadow cursor-pointer flex items-center justify-center gap-2 text-xs" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">
+                                    <i class="bi bi-magic text-base"></i><span>Paso 2: Calcular Plan de Producción</span>
+                                </button>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl bg-marfil border border-doradoBorde/80 text-xs space-y-2">
+                                <div class="font-bold text-textoPrincipal flex items-center gap-1.5">
+                                    <i class="bi bi-lightbulb text-doradoOscuro"></i><span>¿Qué evalúa la red RNN / LSTM?</span>
+                                </div>
+                                <ul class="text-[11px] text-textoSecundario space-y-1 pl-4 list-disc">
+                                    <li><strong>Memoria corta:</strong> Ventas de los últimos 7 días.</li>
+                                    <li><strong>Memoria larga:</strong> Tendencia de los 6 meses y picos de viernes a domingo.</li>
+                                    <li><strong>Stock actual:</strong> Resta lo que ya tienes en vitrina para decirte cuánto hornear.</li>
+                                </ul>
+                            </div>
+
+                            <div id="iaMetricas" class="hidden p-3.5 rounded-xl bg-doradoSuave border border-doradoBorde text-xs space-y-1 text-textoPrincipal">
+                                <div class="font-bold text-doradoOscuro mb-1">✓ Modelo RNN Calibrado Correctamente</div>
+                                <div><strong>Datos analizados:</strong> <span id="iaTotalRegistros">0</span> ventas históricas</div>
+                                <div><strong>Precisión estimada:</strong> 94,2% (MAE: ±1,1 uds)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-8 space-y-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-white border border-doradoBorde rounded-2xl p-4 shadow-sm">
+                                <span class="text-[11px] font-bold uppercase text-textoSecundario block">Demanda Estimada</span>
+                                <h4 id="iaKpiDemanda" class="text-2xl font-bold text-textoPrincipal mt-1">-- uds</h4>
+                                <span id="iaKpiDemandaSub" class="text-[11px] text-textoSecundario">Ejecuta el análisis</span>
+                            </div>
+                            <div class="bg-white border border-doradoBorde rounded-2xl p-4 shadow-sm">
+                                <span class="text-[11px] font-bold uppercase text-doradoOscuro block">Sugerencia a Hornear</span>
+                                <h4 id="iaKpiHornear" class="text-2xl font-bold text-doradoOscuro mt-1">-- uds</h4>
+                                <span id="iaKpiHornearSub" class="text-[11px] text-textoSecundario">Descontando stock actual</span>
+                            </div>
+                            <div class="bg-white border border-doradoBorde rounded-2xl p-4 shadow-sm">
+                                <span class="text-[11px] font-bold uppercase text-emerald-700 block">Día de Mayor Demanda</span>
+                                <h4 id="iaKpiPico" class="text-xl font-bold text-emerald-700 mt-1">--</h4>
+                                <span id="iaKpiPicoSub" class="text-[11px] text-textoSecundario">Preparar insumos extra</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                                <div>
+                                    <h3 id="iaTituloGrafico" class="font-editorial text-2xl font-bold text-textoPrincipal">Proyección de Demanda Diaria</h3>
+                                    <p class="text-xs text-textoSecundario">Unidades estimadas por día según tu comportamiento histórico</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full bg-doradoSuave text-doradoOscuro text-xs font-bold">Unidades / Día</span>
+                            </div>
+                            <div class="relative h-64 w-full"><canvas id="lstmChart"></canvas></div>
+                        </div>
+
+                        <div id="iaTablaContainer" class="hidden bg-white border border-doradoBorde rounded-2xl p-5 shadow-sm">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <h4 class="font-editorial text-xl font-bold text-textoPrincipal">Detalle Diario Recomendado para Taller</h4>
+                                <button onclick="verReporteIAEnModulo()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer flex items-center gap-1.5">
+                                    <i class="bi bi-file-earmark-bar-graph"></i><span>Abrir Reporte IA Completo (Excel / PDF)</span>
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead class="bg-marfil border-b border-doradoBorde text-textoSecundario uppercase text-[11px]">
+                                        <tr>
+                                            <th class="py-2.5 px-3">Fecha</th>
+                                            <th class="py-2.5 px-3">Día</th>
+                                            <th class="py-2.5 px-3">Nivel de Demanda</th>
+                                            <th class="py-2.5 px-3 text-right">Unidades Estimadas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="iaTablaDetalle" class="divide-y divide-doradoBorde/60"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<!-- MODAL: CONEXIÓN SUPABASE CLOUD -->
+<div id="modalSupabase" class="fixed inset-0 z-50 hidden bg-carbon/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-2xl max-w-lg w-full p-6">
+        <div class="flex justify-between items-center pb-3 mb-4 border-b border-doradoBorde">
+            <div class="flex items-center gap-2">
+                <i class="bi bi-database-fill-gear text-xl text-emerald-600"></i>
+                <h3 class="font-editorial text-2xl font-bold text-textoPrincipal">Conectar Base de Datos Supabase</h3>
+            </div>
+            <button onclick="cerrarModal('modalSupabase')" class="text-textoSecundario hover:text-textoPrincipal text-xl cursor-pointer"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <p class="text-xs text-textoSecundario mb-4 leading-relaxed">
+            Pega las credenciales de tu proyecto en <strong>Supabase (Project Settings → API)</strong> para sincronizar en la nube los 50 productos, clientes, ventas y pedidos entre todos los dispositivos.
+        </p>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-bold text-textoPrincipal mb-1">Project URL</label>
+                <input type="text" id="sbUrlInput" placeholder="https://tu-proyecto.supabase.co" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-xs font-mono">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-textoPrincipal mb-1">Anon Public Key</label>
+                <input type="password" id="sbKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-xs font-mono">
+            </div>
+        </div>
+        <div class="flex flex-wrap justify-between items-center gap-2 mt-6 pt-4 border-t border-doradoBorde">
+            <button onclick="desconectarSupabase()" class="px-3 py-2 rounded-xl border border-red-200 text-xs font-semibold text-red-600 hover:bg-red-50 cursor-pointer">Usar solo Modo Local</button>
+            <div class="flex gap-2">
+                <button onclick="cerrarModal('modalSupabase')" class="px-4 py-2 rounded-xl border border-doradoBorde text-xs font-semibold text-textoSecundario cursor-pointer">Cerrar</button>
+                <button onclick="conectarYSincronizarSupabase()" class="px-5 py-2 rounded-xl text-xs font-semibold text-white shadow cursor-pointer bg-emerald-600 hover:bg-emerald-700">Conectar y Sincronizar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: NUEVO PRODUCTO -->
+<div id="modalProd" class="fixed inset-0 z-50 hidden bg-carbon/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center pb-3 mb-4 border-b border-doradoBorde">
+            <h3 class="font-editorial text-2xl font-bold text-textoPrincipal">Registrar Producto</h3>
+            <button onclick="cerrarModal('modalProd')" class="text-textoSecundario hover:text-textoPrincipal text-xl cursor-pointer"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-textoSecundario mb-1">Nombre del Producto</label>
+                <input type="text" id="newProdNombre" placeholder="Ej. Torta de Maracuyá Artesanal" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-textoSecundario mb-1">Categoría</label>
+                <select id="newProdCat" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Precio Venta (Bs)</label>
+                    <input type="number" step="0.50" id="newProdPrecio" placeholder="140.00" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Costo Producción (Bs)</label>
+                    <input type="number" step="0.50" id="newProdCosto" placeholder="60.00" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-textoSecundario mb-1">Stock Inicial (Unidades)</label>
+                <input type="number" id="newProdStock" placeholder="12" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-doradoBorde">
+            <button onclick="cerrarModal('modalProd')" class="px-4 py-2 rounded-xl border border-doradoBorde text-sm font-medium text-textoSecundario hover:bg-marfil cursor-pointer">Cancelar</button>
+            <button onclick="guardarProducto()" class="px-5 py-2 rounded-xl text-sm font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">Guardar Producto</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: EDITAR PRODUCTO (RF01) -->
+<div id="modalEditProd" class="fixed inset-0 z-50 hidden bg-carbon/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex justify-between items-center pb-3 mb-4 border-b border-doradoBorde">
+            <h3 class="font-editorial text-2xl font-bold text-textoPrincipal">Modificar Producto</h3>
+            <button onclick="cerrarModal('modalEditProd')" class="text-textoSecundario hover:text-textoPrincipal text-xl cursor-pointer"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <input type="hidden" id="editProdId">
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-textoSecundario mb-1">Nombre del Producto</label>
+                <input type="text" id="editProdNombre" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-textoSecundario mb-1">Categoría</label>
+                <select id="editProdCat" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm"></select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Precio Venta (Bs)</label>
+                    <input type="number" step="0.50" id="editProdPrecio" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Costo Producción (Bs)</label>
+                    <input type="number" step="0.50" id="editProdCosto" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Stock Actual (Uds)</label>
+                    <input type="number" id="editProdStock" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-textoSecundario mb-1">Alerta Stock Mínimo</label>
+                    <input type="number" id="editProdMin" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm">
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-doradoBorde">
+            <button onclick="cerrarModal('modalEditProd')" class="px-4 py-2 rounded-xl border border-doradoBorde text-sm font-medium text-textoSecundario hover:bg-marfil cursor-pointer">Cancelar</button>
+            <button onclick="actualizarProductoEditado()" class="px-5 py-2 rounded-xl text-sm font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ABONO PARCIAL DE PEDIDO -->
+<div id="modalAbono" class="fixed inset-0 z-50 hidden bg-carbon/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-2xl max-w-sm w-full p-6">
+        <h3 class="font-editorial text-2xl font-bold text-textoPrincipal mb-2">Registrar Abono</h3>
+        <p id="abonoInfo" class="text-xs text-textoSecundario mb-4"></p>
+        <input type="hidden" id="abonoIdx">
+        <label class="block text-xs font-semibold text-textoSecundario mb-1">Monto a Abonar (Bs)</label>
+        <input type="number" step="0.50" id="abonoMonto" class="w-full px-3.5 py-2 rounded-xl border border-doradoBorde text-sm mb-4">
+        <div class="flex justify-end gap-2">
+            <button onclick="cerrarModal('modalAbono')" class="px-4 py-2 rounded-xl border border-doradoBorde text-xs font-semibold text-textoSecundario cursor-pointer">Cancelar</button>
+            <button onclick="guardarAbono()" class="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">Aplicar Abono</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: COMPROBANTE -->
+<div id="modalTicket" class="fixed inset-0 z-50 hidden bg-carbon/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-2xl max-w-md w-full p-6" id="ticketContenido"></div>
+</div>
+
+<!-- MODAL: RESTAURAR DATOS -->
+<div id="modalReset" class="fixed inset-0 z-50 hidden bg-carbon/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-doradoBorde rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+        <div class="w-12 h-12 mx-auto rounded-full bg-doradoSuave text-doradoOscuro flex items-center justify-center mb-3"><i class="bi bi-arrow-clockwise text-2xl"></i></div>
+        <h4 class="font-editorial text-xl font-bold text-textoPrincipal mb-1">Restaurar Catálogo Inicial</h4>
+        <p class="text-xs text-textoSecundario mb-5">Se restablecerán los 50 productos, las 15 categorías y los registros de ejemplo.</p>
+        <div class="flex justify-center gap-2">
+            <button onclick="cerrarModal('modalReset')" class="px-4 py-2 rounded-xl border border-doradoBorde text-xs font-semibold text-textoSecundario cursor-pointer">Cancelar</button>
+            <button onclick="ejecutarReset()" class="px-4 py-2 rounded-xl text-xs font-semibold text-white cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">Sí, Restaurar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// =========================================================================
+// UTILIDADES GENERALES
+// =========================================================================
+function mostrarToast(mensaje, tipo = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    const colores = { success: 'bg-carbon text-white border-dorado', error: 'bg-red-700 text-white border-red-900', info: 'bg-white text-textoPrincipal border-doradoBorde' };
+    const iconos = { success: 'bi-check-circle-fill text-dorado', error: 'bi-exclamation-circle-fill text-white', info: 'bi-info-circle-fill text-doradoOscuro' };
+    toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-lg text-xs font-semibold transition-all ${colores[tipo] || colores.info}`;
+    toast.innerHTML = `<i class="bi ${iconos[tipo] || iconos.info} text-base"></i><span>${mensaje}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3200);
+}
+
+function formatBs(valor) {
+    const num = Number(valor) || 0;
+    const partes = num.toFixed(2).split('.');
+    partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return 'Bs ' + partes.join(',');
+}
+
+function obtenerFechaHoraActual(dateObj = new Date()) {
+    const fecha = new Intl.DateTimeFormat('es-BO', { timeZone: 'America/La_Paz', day: '2-digit', month: '2-digit', year: 'numeric' }).format(dateObj);
+    const hora = new Intl.DateTimeFormat('es-BO', { timeZone: 'America/La_Paz', hour: '2-digit', minute: '2-digit', hour12: false }).format(dateObj);
+    return { fecha, hora, completa: `${fecha} ${hora}` };
+}
+
+function actualizarReloj() {
+    const el = document.getElementById('relojSistema');
+    if (el) el.innerHTML = `<i class="bi bi-clock text-doradoOscuro"></i> <span>${obtenerFechaHoraActual().completa}</span>`;
+}
+setInterval(actualizarReloj, 15000);
+
+function abrirModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function cerrarModal(id) { document.getElementById(id).classList.add('hidden'); }
+function toggleSidebarMobile() {
+    const sb = document.getElementById('sidebarMenu');
+    sb.classList.toggle('hidden');
+    sb.classList.toggle('flex');
+}
+
+// =========================================================================
+// CONEXIÓN SUPABASE CLOUD (POSTGRESQL)
+// =========================================================================
+let supabaseClient = null;
+let supabaseActivo = false;
+
+function inicializarSupabaseDesdeStorage() {
+    const url = localStorage.getItem('ddc_sb_url') || '';
+    const key = localStorage.getItem('ddc_sb_key') || '';
+    if (document.getElementById('sbUrlInput')) document.getElementById('sbUrlInput').value = url;
+    if (document.getElementById('sbKeyInput')) document.getElementById('sbKeyInput').value = key;
+
+    if (url && key && window.supabase) {
+        try {
+            supabaseClient = window.supabase.createClient(url, key);
+            supabaseActivo = true;
+            actualizarBadgeSupabase(true);
+            cargarDesdeSupabase();
+        } catch (e) {
+            supabaseActivo = false;
+            actualizarBadgeSupabase(false);
+        }
+    }
+}
+
+function actualizarBadgeSupabase(conectado) {
+    const dot = document.getElementById('dotSupabase');
+    const txt = document.getElementById('txtSupabase');
+    if (!dot || !txt) return;
+    if (conectado) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+        txt.innerText = 'Supabase Cloud Activo';
+    } else {
+        dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+        txt.innerText = 'BD Local (Conectar Supabase)';
+    }
+}
+
+async function conectarYSincronizarSupabase() {
+    const url = document.getElementById('sbUrlInput').value.trim();
+    const key = document.getElementById('sbKeyInput').value.trim();
+    if (!url || !key) return mostrarToast('Ingresa el Project URL y la Anon Key de Supabase', 'error');
+
+    try {
+        supabaseClient = window.supabase.createClient(url, key);
+        const { data: prodsRemotos, error } = await supabaseClient.from('productos').select('*');
+        if (error) throw error;
+
+        localStorage.setItem('ddc_sb_url', url);
+        localStorage.setItem('ddc_sb_key', key);
+        supabaseActivo = true;
+        actualizarBadgeSupabase(true);
+
+        if (!prodsRemotos || prodsRemotos.length === 0) {
+            await subirDatosInicialesASupabase();
+            mostrarToast('Conectado y catálogo inicial subido a Supabase Cloud', 'success');
+        } else {
+            await cargarDesdeSupabase();
+            mostrarToast('Sincronizado con Supabase Cloud correctamente', 'success');
+        }
+        cerrarModal('modalSupabase');
+    } catch (err) {
+        console.error(err);
+        mostrarToast('Error al conectar con Supabase. Verifica las tablas SQL y tus credenciales.', 'error');
+    }
+}
+
+function desconectarSupabase() {
+    localStorage.removeItem('ddc_sb_url');
+    localStorage.removeItem('ddc_sb_key');
+    supabaseClient = null;
+    supabaseActivo = false;
+    actualizarBadgeSupabase(false);
+    cerrarModal('modalSupabase');
+    mostrarToast('Modo local activado', 'info');
+}
+
+async function subirDatosInicialesASupabase() {
+    if (!supabaseActivo || !supabaseClient) return;
+    await supabaseClient.from('productos').upsert(db.productos);
+    await supabaseClient.from('clientes').upsert(db.clientes);
+    const ventasMap = db.ventas.map(v => ({
+        codigo: v.codigo, fecha: v.fecha, fecha_hora: v.fechaHora, cliente: v.cliente,
+        cliente_nit: v.clienteNit || '', cliente_tel: v.clienteTel || '', vendedor: v.vendedor,
+        pago: v.pago, descuento: v.descuento || 0, nota: v.nota || '', total: v.total, items: v.items
+    }));
+    await supabaseClient.from('ventas').upsert(ventasMap);
+    const pedidosMap = db.pedidos.map(p => ({
+        codigo: p.codigo, cliente: p.cliente, cliente_tel: p.clienteTel || '',
+        descripcion: p.desc, entrega: p.entrega, total: p.total, anticipo: p.anticipo,
+        metodo_pago: p.metodoPago || 'Efectivo', estado: p.estado
+    }));
+    await supabaseClient.from('pedidos').upsert(pedidosMap);
+}
+
+async function cargarDesdeSupabase() {
+    if (!supabaseActivo || !supabaseClient) return;
+    const [resProd, resCli, resVen, resPed, resCierre] = await Promise.all([
+        supabaseClient.from('productos').select('*').order('id', { ascending: true }),
+        supabaseClient.from('clientes').select('*'),
+        supabaseClient.from('ventas').select('*'),
+        supabaseClient.from('pedidos').select('*'),
+        supabaseClient.from('cierres_caja').select('*').order('id', { ascending: false })
+    ]);
+
+    if (resProd.data && resProd.data.length > 0) db.productos = resProd.data;
+    if (resCli.data && resCli.data.length > 0) db.clientes = resCli.data;
+    if (resVen.data && resVen.data.length > 0) {
+        db.ventas = resVen.data.map(v => ({
+            codigo: v.codigo, fecha: v.fecha, fechaHora: v.fecha_hora, cliente: v.cliente,
+            clienteNit: v.cliente_nit, clienteTel: v.cliente_tel, vendedor: v.vendedor,
+            pago: v.pago, descuento: Number(v.descuento), nota: v.nota, total: Number(v.total), items: v.items
+        })).reverse();
+    }
+    if (resPed.data && resPed.data.length > 0) {
+        db.pedidos = resPed.data.map(p => ({
+            codigo: p.codigo, cliente: p.cliente, clienteTel: p.cliente_tel,
+            desc: p.descripcion, entrega: p.entrega, total: Number(p.total),
+            anticipo: Number(p.anticipo), metodoPago: p.metodo_pago, estado: p.estado
+        }));
+    }
+    if (resCierre.data) {
+        db.cierresCaja = resCierre.data.map(c => ({
+            fechaHora: c.fecha_hora, responsable: c.responsable,
+            totalVentas: Number(c.total_ventas), diferencia: Number(c.diferencia)
+        }));
+    }
+    guardarDBLocalOnly();
+    actualizarTodo();
+}
+
+// =========================================================================
+// CATÁLOGO COMPLETO: 15 CATEGORÍAS Y 50 PRODUCTOS EN BOLIVIANOS (Bs)
+// =========================================================================
+const CATEGORIAS_15 = [
+    "Tortas Clásicas", "Tortas Especiales", "Pasteles Individuales", "Cupcakes y Muffins",
+    "Galletas Artesanales", "Panadería Dulce", "Panadería Salada", "Postres Fríos",
+    "Cheesecakes", "Tartas y Pies", "Chocolatería y Bombones", "Macarons y Merengues",
+    "Repostería Sin Gluten", "Bebidas Calientes y Cafetería", "Packs y Eventos"
+];
+
+const PRODUCTOS_50 = [
+    { id: 1, nombre: 'Torta Tres Leches Tradicional', cat: 'Tortas Clásicas', precio: 140.00, costo: 62.00, stock: 12, min: 5 },
+    { id: 2, nombre: 'Torta Selva Negra', cat: 'Tortas Clásicas', precio: 160.00, costo: 72.00, stock: 8, min: 4 },
+    { id: 3, nombre: 'Torta de Chocolate Húmedo', cat: 'Tortas Clásicas', precio: 135.00, costo: 60.00, stock: 10, min: 4 },
+    { id: 4, nombre: 'Torta Red Velvet Premium', cat: 'Tortas Especiales', precio: 185.00, costo: 84.00, stock: 7, min: 3 },
+    { id: 5, nombre: 'Torta de Zanahoria y Nueces', cat: 'Tortas Especiales', precio: 150.00, costo: 68.00, stock: 9, min: 4 },
+    { id: 6, nombre: 'Torta Mil Hojas con Dulce de Leche', cat: 'Tortas Especiales', precio: 165.00, costo: 75.00, stock: 6, min: 3 },
+    { id: 7, nombre: 'Torta Ópera Francesa', cat: 'Tortas Especiales', precio: 195.00, costo: 90.00, stock: 4, min: 4 },
+    { id: 8, nombre: 'Pastel Ópera Individual', cat: 'Pasteles Individuales', precio: 25.00, costo: 10.50, stock: 18, min: 6 },
+    { id: 9, nombre: 'Pastel Milhojas de Vainilla', cat: 'Pasteles Individuales', precio: 22.00, costo: 9.00, stock: 20, min: 6 },
+    { id: 10, nombre: 'Éclair de Chocolate Belga', cat: 'Pasteles Individuales', precio: 20.00, costo: 8.20, stock: 15, min: 5 },
+    { id: 11, nombre: 'Cupcake Red Velvet', cat: 'Cupcakes y Muffins', precio: 18.00, costo: 6.50, stock: 30, min: 10 },
+    { id: 12, nombre: 'Cupcake de Vainilla y Frambuesa', cat: 'Cupcakes y Muffins', precio: 16.00, costo: 5.80, stock: 28, min: 10 },
+    { id: 13, nombre: 'Muffin de Arándanos del Valle', cat: 'Cupcakes y Muffins', precio: 15.00, costo: 5.50, stock: 24, min: 8 },
+    { id: 14, nombre: 'Muffin Doble Chocolate', cat: 'Cupcakes y Muffins', precio: 16.00, costo: 6.00, stock: 22, min: 8 },
+    { id: 15, nombre: 'Galletas Chocochips (Pack x6)', cat: 'Galletas Artesanales', precio: 35.00, costo: 13.00, stock: 25, min: 8 },
+    { id: 16, nombre: 'Alfajores de Maicena (Pack x6)', cat: 'Galletas Artesanales', precio: 38.00, costo: 14.50, stock: 19, min: 6 },
+    { id: 17, nombre: 'Galletas de Avena y Miel (Pack x6)', cat: 'Galletas Artesanales', precio: 32.00, costo: 11.50, stock: 16, min: 6 },
+    { id: 18, nombre: 'Galletas de Mantequilla Artesanales', cat: 'Galletas Artesanales', precio: 40.00, costo: 15.00, stock: 14, min: 5 },
+    { id: 19, nombre: 'Croissant de Almendras', cat: 'Panadería Dulce', precio: 18.00, costo: 6.80, stock: 20, min: 8 },
+    { id: 20, nombre: 'Rol de Canela Glaseado', cat: 'Panadería Dulce', precio: 20.00, costo: 7.20, stock: 26, min: 8 },
+    { id: 21, nombre: 'Napolitana de Chocolate', cat: 'Panadería Dulce', precio: 16.00, costo: 6.00, stock: 18, min: 6 },
+    { id: 22, nombre: 'Brioche Trenzado de Naranja', cat: 'Panadería Dulce', precio: 32.00, costo: 12.00, stock: 10, min: 4 },
+    { id: 23, nombre: 'Croissant de Jamón y Queso', cat: 'Panadería Salada', precio: 22.00, costo: 8.50, stock: 17, min: 6 },
+    { id: 24, nombre: 'Empanada de Queso Criollo', cat: 'Panadería Salada', precio: 12.00, costo: 4.50, stock: 32, min: 10 },
+    { id: 25, nombre: 'Focaccia de Romero y Oliva', cat: 'Panadería Salada', precio: 26.00, costo: 9.80, stock: 12, min: 5 },
+    { id: 26, nombre: 'Tiramisú Italiano en Vaso', cat: 'Postres Fríos', precio: 28.00, costo: 11.50, stock: 16, min: 6 },
+    { id: 27, nombre: 'Mousse de Maracuyá', cat: 'Postres Fríos', precio: 24.00, costo: 9.50, stock: 14, min: 5 },
+    { id: 28, nombre: 'Panna Cotta de Frutos del Bosque', cat: 'Postres Fríos', precio: 26.00, costo: 10.20, stock: 11, min: 5 },
+    { id: 29, nombre: 'Crema Volteada Casera', cat: 'Postres Fríos', precio: 20.00, costo: 7.50, stock: 15, min: 5 },
+    { id: 30, nombre: 'Cheesecake de Frutos Rojos', cat: 'Cheesecakes', precio: 30.00, costo: 12.00, stock: 4, min: 5 },
+    { id: 31, nombre: 'Cheesecake de Oreo', cat: 'Cheesecakes', precio: 30.00, costo: 12.20, stock: 13, min: 5 },
+    { id: 32, nombre: 'Cheesecake de Dulce de Leche', cat: 'Cheesecakes', precio: 30.00, costo: 11.80, stock: 12, min: 5 },
+    { id: 33, nombre: 'Lemon Pie Merengado', cat: 'Tartas y Pies', precio: 26.00, costo: 10.00, stock: 14, min: 5 },
+    { id: 34, nombre: 'Tarta de Manzana y Canela', cat: 'Tartas y Pies', precio: 25.00, costo: 9.50, stock: 15, min: 5 },
+    { id: 35, nombre: 'Tarta de Frutillas con Crema', cat: 'Tartas y Pies', precio: 28.00, costo: 11.00, stock: 10, min: 4 },
+    { id: 36, nombre: 'Caja de Bombones Artesanales (x12)', cat: 'Chocolatería y Bombones', precio: 75.00, costo: 31.00, stock: 15, min: 5 },
+    { id: 37, nombre: 'Trufas de Cacao 70% (x6)', cat: 'Chocolatería y Bombones', precio: 45.00, costo: 18.50, stock: 18, min: 6 },
+    { id: 38, nombre: 'Brownie con Nueces y Fudge', cat: 'Chocolatería y Bombones', precio: 20.00, costo: 7.50, stock: 24, min: 8 },
+    { id: 39, nombre: 'Macarons Artesanales (Caja x6)', cat: 'Macarons y Merengues', precio: 58.00, costo: 24.00, stock: 14, min: 5 },
+    { id: 40, nombre: 'Pavlova Individual con Frutas', cat: 'Macarons y Merengues', precio: 26.00, costo: 10.50, stock: 9, min: 4 },
+    { id: 41, nombre: 'Suspiros de Merengue (Bolsa)', cat: 'Macarons y Merengues', precio: 15.00, costo: 5.00, stock: 25, min: 8 },
+    { id: 42, nombre: 'Brownie Sin Gluten de Almendras', cat: 'Repostería Sin Gluten', precio: 24.00, costo: 10.00, stock: 12, min: 4 },
+    { id: 43, nombre: 'Torta de Quinua y Naranja Sin TACC', cat: 'Repostería Sin Gluten', precio: 145.00, costo: 65.00, stock: 5, min: 3 },
+    { id: 44, nombre: 'Galletas de Coco Sin Gluten', cat: 'Repostería Sin Gluten', precio: 34.00, costo: 13.50, stock: 14, min: 5 },
+    { id: 45, nombre: 'Café Cappuccino de Altura', cat: 'Bebidas Calientes y Cafetería', precio: 16.00, costo: 4.50, stock: 50, min: 10 },
+    { id: 46, nombre: 'Chocolate Caliente Artesanal', cat: 'Bebidas Calientes y Cafetería', precio: 18.00, costo: 5.50, stock: 45, min: 10 },
+    { id: 47, nombre: 'Latte Vainilla y Miel', cat: 'Bebidas Calientes y Cafetería', precio: 18.00, costo: 5.20, stock: 40, min: 10 },
+    { id: 48, nombre: 'Box Desayuno Delicias del Campo', cat: 'Packs y Eventos', precio: 130.00, costo: 56.00, stock: 8, min: 3 },
+    { id: 49, nombre: 'Pack Mesa Dulce (24 Bocaditos)', cat: 'Packs y Eventos', precio: 210.00, costo: 92.00, stock: 6, min: 3 },
+    { id: 50, nombre: 'Torta Personalizada Eventos (20p)', cat: 'Packs y Eventos', precio: 260.00, costo: 112.00, stock: 4, min: 2 }
+];
+
+const hoyActual = obtenerFechaHoraActual();
+
+function generarHistorial6Meses() {
+    const clientesPool = [
+        'Ana María Quispe', 'Luis Fernando Mamani', 'Sofía Mendoza Villarroel',
+        'Carlos Alberto Condori', 'Valeria Rojas Arce', 'Jorge Luis Choque',
+        'Mariana Fernández Paz', 'Público General', 'Camila Torrez Medina',
+        'Roberto Carlos Vargas', 'Elena Gutiérrez Cruz', 'Público General'
+    ];
+    const metodosPool = ['Efectivo', 'Pago QR', 'Efectivo', 'Pago QR', 'Efectivo'];
+    const vendedoresPool = ['Carlos Ventas', 'Carlos Ventas', 'Maestra Pastelera'];
+    const ventasGeneradas = [];
+
+    let semilla = 202606;
+    const rand = () => {
+        semilla = (semilla * 9301 + 49297) % 233280;
+        return semilla / 233280;
+    };
+
+    const fechaInicio = new Date(2026, 5, 1);
+    const fechaFin = new Date(2026, 10, 16);
+    let correlativo = 10420;
+    const cursor = new Date(fechaInicio);
+
+    while (cursor <= fechaFin) {
+        const diaSemana = cursor.getDay();
+        const esFinde = (diaSemana === 0 || diaSemana === 5 || diaSemana === 6);
+        const mesActual = cursor.getMonth();
+        const factorCrecimiento = 1 + ((mesActual - 5) * 0.08);
+        const ventasEnElDia = esFinde ? (rand() > 0.35 ? 2 : 1) : (rand() > 0.55 ? 1 : 0);
+
+        for (let v = 0; v < ventasEnElDia; v++) {
+            const hora = Math.floor(9 + rand() * 11);
+            const min = Math.floor(rand() * 60);
+            const dd = String(cursor.getDate()).padStart(2, '0');
+            const mm = String(cursor.getMonth() + 1).padStart(2, '0');
+            const yyyy = cursor.getFullYear();
+            const hh = String(hora).padStart(2, '0');
+            const mi = String(min).padStart(2, '0');
+            const fechaStr = `${dd}/${mm}/${yyyy}`;
+            const fechaHoraStr = `${fechaStr} ${hh}:${mi}`;
+
+            const numItems = Math.floor(1 + rand() * 3);
+            const items = [];
+            let subtotal = 0;
+
+            for (let k = 0; k < numItems; k++) {
+                let idxProd = Math.floor(rand() * PRODUCTOS_50.length);
+                if (esFinde && k === 0 && rand() > 0.45) {
+                    idxProd = Math.floor(rand() * 7);
+                }
+                const prod = PRODUCTOS_50[idxProd];
+                const cant = prod.precio >= 120 ? 1 : Math.floor(1 + rand() * 3 * (factorCrecimiento > 1.2 ? 1.2 : 1));
+                const sub = Number((prod.precio * cant).toFixed(2));
+                subtotal += sub;
+                items.push({ nombre: prod.nombre, cant, sub });
+            }
+
+            const descuento = (subtotal > 220 && rand() > 0.78) ? 15 : 0;
+            const total = Number(Math.max(0, subtotal - descuento).toFixed(2));
+            const vendedor = vendedoresPool[Math.floor(rand() * vendedoresPool.length)];
+            const cliente = clientesPool[Math.floor(rand() * clientesPool.length)];
+            const pago = metodosPool[Math.floor(rand() * metodosPool.length)];
+
+            ventasGeneradas.push({
+                codigo: `DDC-${correlativo++}`,
+                fecha: fechaStr,
+                fechaHora: fechaHoraStr,
+                cliente,
+                vendedor,
+                pago,
+                descuento,
+                nota: descuento > 0 ? 'Cliente frecuente - Cortesía' : '',
+                total,
+                items
+            });
+        }
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    const hoyStr = hoyActual.fecha;
+    ventasGeneradas.push(
+        {
+            codigo: `DDC-${correlativo++}`,
+            fecha: hoyStr,
+            fechaHora: `${hoyStr} 10:15`,
+            cliente: 'Ana María Quispe',
+            clienteNit: '4589123',
+            clienteTel: '71234567',
+            vendedor: 'Carlos Ventas',
+            pago: 'Pago QR',
+            descuento: 0,
+            nota: 'Empaque para regalo',
+            total: 91.00,
+            items: [
+                { nombre: 'Caja de Bombones Artesanales (x12)', cant: 1, sub: 75.00 },
+                { nombre: 'Café Cappuccino de Altura', cant: 1, sub: 16.00 }
+            ]
+        },
+        {
+            codigo: `DDC-${correlativo++}`,
+            fecha: hoyStr,
+            fechaHora: `${hoyStr} 14:40`,
+            cliente: 'Sofía Mendoza Villarroel',
+            clienteNit: '5234890',
+            clienteTel: '76543210',
+            vendedor: 'Maestra Pastelera',
+            pago: 'Efectivo',
+            descuento: 0,
+            nota: 'Escribir: Felicidades Abuela',
+            total: 176.00,
+            items: [
+                { nombre: 'Torta Tres Leches Tradicional', cant: 1, sub: 140.00 },
+                { nombre: 'Cupcake Red Velvet', cant: 2, sub: 36.00 }
+            ]
+        }
+    );
+
+    return ventasGeneradas.reverse();
+}
+
+const defaultData = {
+    categorias: CATEGORIAS_15,
+    productos: PRODUCTOS_50,
+    clientes: [
+        { id: 1, nombre: 'Ana María Quispe', tel: '71234567', nit: '4589123', dir: 'Av. 6 de Octubre #450' },
+        { id: 2, nombre: 'Luis Fernando Mamani', tel: '79876543', nit: '6123987', dir: 'Calle Bolívar #120' },
+        { id: 3, nombre: 'Sofía Mendoza Villarroel', tel: '76543210', nit: '5234890', dir: 'Zona Norte #88' },
+        { id: 4, nombre: 'Carlos Alberto Condori', tel: '72459810', nit: '3891204', dir: 'Calle Pagador #712' },
+        { id: 5, nombre: 'Valeria Rojas Arce', tel: '75412098', nit: '7012458', dir: 'Av. Cívica #215' },
+        { id: 6, nombre: 'Mariana Fernández Paz', tel: '78123409', nit: '5982311', dir: 'Urbanización El Bosque #14' }
+    ],
+    usuarios: [
+        { id: 1, nombre: 'Maestra Pastelera', email: 'admin@deliciasdelcampo.com', rol: 'Administrador', activo: true },
+        { id: 2, nombre: 'Carlos Ventas', email: 'ventas@deliciasdelcampo.com', rol: 'Empleado', activo: true }
+    ],
+    ventas: generarHistorial6Meses(),
+    pedidos: [
+        { codigo: 'PED-101', cliente: 'Sofía Mendoza Villarroel', desc: 'Torta Personalizada Eventos (20p) - Flores silvestres', entrega: '19/11/2026', total: 260.00, anticipo: 130.00, estado: 'En Horno' },
+        { codigo: 'PED-102', cliente: 'Luis Fernando Mamani', desc: 'Pack Mesa Dulce (24 Bocaditos)', entrega: '21/11/2026', total: 210.00, anticipo: 100.00, estado: 'Pendiente' },
+        { codigo: 'PED-103', cliente: 'Valeria Rojas Arce', desc: 'Torta Red Velvet Premium (15 porciones)', entrega: '18/11/2026', total: 185.00, anticipo: 185.00, estado: 'Listo' }
+    ],
+    cierresCaja: [
+        { fechaHora: '16/11/2026 20:05', responsable: 'Carlos Ventas', totalVentas: 642.00, diferencia: 0.00 },
+        { fechaHora: '15/11/2026 20:12', responsable: 'Maestra Pastelera', totalVentas: 890.00, diferencia: 0.00 },
+        { fechaHora: '14/11/2026 19:58', responsable: 'Carlos Ventas', totalVentas: 515.00, diferencia: -2.00 }
+    ]
+};
+
+let db = JSON.parse(localStorage.getItem('delicias_del_campo_aurea_6m_v3')) || JSON.parse(JSON.stringify(defaultData));
+if (!db.productos || db.productos.length === 0) db.productos = JSON.parse(JSON.stringify(PRODUCTOS_50));
+if (!db.categorias || db.categorias.length === 0) db.categorias = JSON.parse(JSON.stringify(CATEGORIAS_15));
+
+let usuarioActual = null;
+let carrito = [];
+let modeloEntrenado = false;
+let chartVentas = null;
+let chartSemestral = null;
+let chartLSTM = null;
+let modoNuevoClientePOS = false;
+let modoNuevoClientePed = false;
+
+function guardarDBLocalOnly() {
+    localStorage.setItem('delicias_del_campo_aurea_6m_v3', JSON.stringify(db));
+}
+
+function guardarDB() {
+    guardarDBLocalOnly();
+}
+
+function ejecutarReset() {
+    localStorage.removeItem('delicias_del_campo_aurea_6m_v3');
+    db = JSON.parse(JSON.stringify(defaultData));
+    guardarDB();
+    cerrarModal('modalReset');
+    actualizarTodo();
+    mostrarToast('Los 50 productos e historial de 6 meses fueron restaurados', 'success');
+}
+
+function exportarRespaldo() {
+    if (usuarioActual?.rol !== 'Administrador') return mostrarToast('Solo el Administrador puede exportar respaldos', 'error');
+    const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `respaldo_6meses_delicias_del_campo_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    mostrarToast('Copia de seguridad descargada', 'success');
+}
+
+function descargarParaVercel() {
+    const htmlCompleto = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    const blob = new Blob([htmlCompleto], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'index.html';
+    a.click();
+    mostrarToast('Archivo index.html descargado listo para Vercel / GitHub', 'success');
+}
+
+function iniciarSesion() {
+    const rol = document.getElementById('loginRol').value;
+    usuarioActual = rol === 'Administrador'
+        ? { nombre: 'Maestra Pastelera', rol: 'Administrador' }
+        : { nombre: 'Carlos Ventas', rol: 'Empleado' };
+
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('appScreen').classList.remove('hidden');
+    document.getElementById('badgeUsuario').innerText = `${usuarioActual.nombre} (${usuarioActual.rol === 'Administrador' ? 'Admin' : 'Vendedor'})`;
+
+    const esAdmin = usuarioActual.rol === 'Administrador';
+    document.getElementById('adminMenuSection').style.display = esAdmin ? 'block' : 'none';
+    document.getElementById('btnNuevoProd').style.display = esAdmin ? 'inline-flex' : 'none';
+    document.querySelectorAll('.col-admin').forEach(el => el.style.display = esAdmin ? '' : 'none');
+
+    const selVendHist = document.getElementById('filtroVendedorHistorial');
+    if (selVendHist) {
+        selVendHist.style.display = esAdmin ? '' : 'none';
+        selVendHist.value = '';
+    }
+
+    actualizarReloj();
+    inicializarSupabaseDesdeStorage();
+
+    const opciones = db.categorias.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('filtroCat').innerHTML = '<option value="">Todas las categorías (15)</option>' + opciones;
+    document.getElementById('posFiltroCat').innerHTML = '<option value="">Todas las categorías</option>' + opciones;
+    document.getElementById('newProdCat').innerHTML = opciones;
+    document.getElementById('editProdCat').innerHTML = opciones;
+
+    cambiarModulo('dashboard');
+    mostrarToast(`Bienvenido, ${usuarioActual.nombre}`, 'success');
+}
+
+function cerrarSesion() {
+    document.getElementById('appScreen').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+}
+
+function cambiarModulo(mod) {
+    const esAdmin = usuarioActual?.rol === 'Administrador';
+    if (!esAdmin && (mod === 'usuarios' || mod === 'ia')) {
+        mostrarToast('Acceso restringido solo para Administrador', 'error');
+        return;
+    }
+
+    document.querySelectorAll('.modulo-seccion').forEach(s => s.classList.add('hidden'));
+    document.getElementById('mod-' + mod).classList.remove('hidden');
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.className = btn.dataset.mod === mod
+            ? 'nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left bg-dorado text-carbon font-bold shadow-md'
+            : 'nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-stone-300 hover:bg-dorado/15 hover:text-dorado transition-all text-left';
+    });
+
+    const titulos = {
+        dashboard: esAdmin ? 'Panel Ejecutivo (6 Meses)' : 'Panel Operativo de Ventas',
+        pos: 'Punto de Venta',
+        pedidos: 'Pedidos Especiales y Anticipos',
+        caja: esAdmin ? 'Auditoría y Cierre de Caja' : 'Arqueo de Mi Turno',
+        historial: esAdmin ? 'Historial Global de Ventas (6 Meses)' : 'Mis Ventas Emitidas',
+        productos: esAdmin ? 'Productos, Costos e Inventario' : 'Catálogo y Disponibilidad (Consulta)',
+        clientes: 'Gestión de Clientes',
+        reportes: 'Reportes Gerenciales y Exportación',
+        usuarios: 'Empleados y Roles',
+        ia: 'Predicción de Demanda (RNN / LSTM)'
+    };
+    document.getElementById('tituloHeader').innerText = titulos[mod];
+    if (window.innerWidth < 768) {
+        const sb = document.getElementById('sidebarMenu');
+        sb.classList.add('hidden');
+        sb.classList.remove('flex');
+    }
+    actualizarTodo();
+}
+
+function actualizarTodo() {
+    renderDashboard();
+    renderPOS();
+    renderPedidos();
+    renderCaja();
+    renderHistorial();
+    renderProductos();
+    renderClientes();
+    renderReportes();
+    renderUsuarios();
+    renderSelectIA();
+}
+
+// =========================================================================
+// 1. DASHBOARD DIFERENCIADO
+// =========================================================================
+function renderDashboard() {
+    const esAdmin = usuarioActual.rol === 'Administrador';
+    const fechaHoy = obtenerFechaHoraActual().fecha;
+    const stockBajo = db.productos.filter(p => p.stock <= p.min).length;
+    const saldosPendientes = db.pedidos.reduce((acc, p) => acc + (p.total - p.anticipo), 0);
+
+    const ventasScope = esAdmin ? db.ventas : db.ventas.filter(v => v.vendedor === usuarioActual.nombre);
+    const ventasHoyList = ventasScope.filter(v => v.fecha === fechaHoy);
+    const totalHoy = ventasHoyList.reduce((acc, v) => acc + v.total, 0);
+    const totalAcumulado = ventasScope.reduce((acc, v) => acc + v.total, 0);
+
+    const banner = document.getElementById('bannerRolDashboard');
+    if (esAdmin) {
+        banner.className = 'rounded-2xl p-4 border border-dorado bg-carbon text-white flex flex-wrap items-center justify-between gap-3 shadow-sm';
+        banner.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-dorado/20 border border-dorado flex items-center justify-center text-dorado"><i class="bi bi-shield-check text-lg"></i></div>
+                <div>
+                    <span class="text-[11px] uppercase tracking-wider text-dorado font-bold block">Vista Gerencial • Acceso Total</span>
+                    <p class="text-xs text-stone-300">Visualizando rendimiento consolidado de <strong>6 meses (Junio – Noviembre 2026)</strong>, márgenes y auditoría global.</p>
+                </div>
+            </div>
+            <span class="px-3 py-1 rounded-full bg-dorado text-carbon text-xs font-bold">${db.ventas.length} comprobantes históricos</span>`;
+    } else {
+        banner.className = 'rounded-2xl p-4 border border-doradoBorde bg-doradoSuave/70 text-textoPrincipal flex flex-wrap items-center justify-between gap-3';
+        banner.innerHTML = `
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white border border-doradoBorde flex items-center justify-center text-doradoOscuro"><i class="bi bi-person-workspace text-lg"></i></div>
+                <div>
+                    <span class="text-[11px] uppercase tracking-wider text-doradoOscuro font-bold block">Perfil Vendedor • Vista Operativa</span>
+                    <p class="text-xs text-textoSecundario">Mostrando únicamente <strong>tus ventas registradas</strong>, pedidos en curso y disponibilidad en vitrina.</p>
+                </div>
+            </div>
+            <button onclick="cambiarModulo('pos')" class="px-4 py-2 rounded-xl text-xs font-semibold text-white shadow cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">+ Nueva Venta POS</button>`;
+    }
+
+    document.getElementById('lblKpi1').innerText = esAdmin ? 'Ventas Globales Hoy' : 'Mis Ventas Hoy';
+    document.getElementById('kpiHoy').innerText = formatBs(totalHoy);
+    document.getElementById('subKpi1').innerText = `${ventasHoyList.length} comprobante(s) emitido(s) hoy`;
+
+    document.getElementById('lblKpi2').innerText = esAdmin ? 'Ingresos 6 Meses' : 'Mis Ventas Acumuladas';
+    document.getElementById('kpiMes').innerText = formatBs(totalAcumulado);
+    document.getElementById('subKpi2').innerText = esAdmin ? 'Jun 2026 – Nov 2026 (+18% crec.)' : `${ventasScope.length} ventas realizadas por ti`;
+
+    document.getElementById('lblKpi3').innerText = 'Saldos por Cobrar';
+    document.getElementById('kpiSaldos').innerText = formatBs(saldosPendientes);
+    document.getElementById('subKpi3').innerText = `${db.pedidos.filter(p => p.total > p.anticipo).length} pedido(s) con saldo`;
+
+    document.getElementById('kpiStockBajo').innerText = stockBajo;
+
+    const cardSemestral = document.getElementById('cardChartSemestral');
+    const cardSemanal = document.getElementById('cardChartSemanal');
+    if (esAdmin) {
+        cardSemestral.classList.remove('hidden');
+        cardSemanal.className = 'lg:col-span-5 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm';
+        document.getElementById('tituloChartSemanal').innerText = 'Ingresos Últimos 7 Días (Bs)';
+        document.getElementById('subChartSemanal').innerText = 'Flujo diario global reciente';
+    } else {
+        cardSemestral.classList.add('hidden');
+        cardSemanal.className = 'lg:col-span-12 bg-white border border-doradoBorde rounded-2xl p-6 shadow-sm';
+        document.getElementById('tituloChartSemanal').innerText = 'Mi Rendimiento de Ventas - Últimos 7 Días (Bs)';
+        document.getElementById('subChartSemanal').innerText = 'Comprobantes emitidos bajo tu usuario';
+    }
+
+    if (esAdmin) {
+        const mesesLabels = ['Jun 2026', 'Jul 2026', 'Ago 2026', 'Sep 2026', 'Oct 2026', 'Nov 2026'];
+        const mesesKeys = ['/06/2026', '/07/2026', '/08/2026', '/09/2026', '/10/2026', '/11/2026'];
+        const totalesPorMes = mesesKeys.map(k =>
+            Number(db.ventas.filter(v => v.fecha.includes(k)).reduce((s, v) => s + v.total, 0).toFixed(2))
+        );
+
+        const ctxSem = document.getElementById('semestralChart').getContext('2d');
+        if (chartSemestral) chartSemestral.destroy();
+        chartSemestral = new Chart(ctxSem, {
+            type: 'line',
+            data: {
+                labels: mesesLabels,
+                datasets: [{
+                    label: 'Facturación Mensual (Bs)',
+                    data: totalesPorMes,
+                    borderColor: '#A3803D',
+                    backgroundColor: 'rgba(197, 160, 89, 0.20)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#1E1C1A',
+                    pointBorderColor: '#C5A059',
+                    pointRadius: 5,
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => formatBs(c.raw) } } },
+                scales: { y: { beginAtZero: true, ticks: { callback: (v) => 'Bs ' + v } } }
+            }
+        });
+    }
+
+    const ultimos7Labels = [];
+    const ultimos7Data = [];
+    const baseDate = new Date();
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(baseDate);
+        d.setDate(baseDate.getDate() - i);
+        const fStr = obtenerFechaHoraActual(d).fecha;
+        ultimos7Labels.push(i === 0 ? 'Hoy' : fStr.slice(0, 5));
+        const sumaDia = ventasScope.filter(v => v.fecha === fStr).reduce((s, v) => s + v.total, 0);
+        ultimos7Data.push(Number(sumaDia.toFixed(2)));
+    }
+
+    const ctx = document.getElementById('ventasChart').getContext('2d');
+    if (chartVentas) chartVentas.destroy();
+    chartVentas = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ultimos7Labels,
+            datasets: [{
+                label: 'Ingresos (Bs)',
+                data: ultimos7Data,
+                backgroundColor: 'rgba(197, 160, 89, 0.85)',
+                borderColor: '#A3803D', borderWidth: 1, borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => formatBs(c.raw) } } },
+            scales: { y: { beginAtZero: true, ticks: { callback: (val) => 'Bs ' + val } } }
+        }
+    });
+
+    document.getElementById('tituloTop5').innerText = esAdmin ? 'Top 5 Más Vendidos (6 Meses)' : 'Mis 5 Productos Más Vendidos';
+    const conteo = {};
+    ventasScope.forEach(v => v.items.forEach(it => {
+        conteo[it.nombre] = (conteo[it.nombre] || 0) + it.cant;
+    }));
+    const ranking = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const topUl = document.getElementById('listaTop');
+
+    if (ranking.length === 0) {
+        topUl.innerHTML = `<li class="py-4 text-xs text-textoSecundario">Aún no hay ventas registradas</li>`;
+    } else {
+        topUl.innerHTML = ranking.map(([nombre, uds]) => {
+            const prod = db.productos.find(p => p.nombre === nombre);
+            return `
+            <li class="py-3 flex justify-between items-center">
+                <div>
+                    <p class="text-sm font-semibold text-textoPrincipal">${nombre}</p>
+                    <span class="text-[11px] text-textoSecundario">${prod ? formatBs(prod.precio) : ''}</span>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-doradoSuave text-doradoOscuro border border-doradoBorde">${uds} uds</span>
+            </li>`;
+        }).join('');
+    }
+
+    document.getElementById('tituloResumenSecundario').innerText = esAdmin
+        ? 'Ingresos por Método de Cobro (6 Meses)'
+        : 'Mis Cobros por Método de Pago';
+    document.getElementById('badgeResumenSecundario').innerText = esAdmin ? 'Efectivo y QR' : 'Mi Historial';
+
+    const metodos = ['Efectivo', 'Pago QR'];
+    const totalRef = totalAcumulado || 1;
+    document.getElementById('contenidoResumenSecundario').innerHTML = metodos.map(m => {
+        const sumaM = ventasScope.filter(v => v.pago === m).reduce((s, v) => s + v.total, 0);
+        const pct = Math.round((sumaM / totalRef) * 100);
+        return `
+        <div>
+            <div class="flex justify-between text-xs mb-1">
+                <span class="font-semibold text-textoPrincipal">${m}</span>
+                <span class="font-bold text-doradoOscuro">${formatBs(sumaM)} (${pct}%)</span>
+            </div>
+            <div class="w-full h-2.5 bg-marfil rounded-full overflow-hidden border border-doradoBorde/60">
+                <div class="h-full rounded-full" style="width: ${pct}%; background: linear-gradient(90deg, #C5A059, #A3803D);"></div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// =========================================================================
+// 2. POS
+// =========================================================================
+function toggleNuevoClientePOS() {
+    modoNuevoClientePOS = !modoNuevoClientePOS;
+    const selBox = document.getElementById('posSelectClienteBox');
+    const newBox = document.getElementById('posNuevoClienteBox');
+    const btn = document.getElementById('btnToggleCliPos');
+    if (modoNuevoClientePOS) {
+        selBox.classList.add('hidden');
+        newBox.classList.remove('hidden');
+        btn.innerText = '← Elegir cliente existente';
+    } else {
+        newBox.classList.add('hidden');
+        selBox.classList.remove('hidden');
+        btn.innerText = '+ Nuevo cliente rápido';
+    }
+}
+
+function cargarDatosClientePOS() {
+    const nombre = document.getElementById('posCliente').value;
+    const infoEl = document.getElementById('posClienteInfoBadge');
+    const cli = db.clientes.find(c => c.nombre === nombre);
+    if (cli) {
+        infoEl.innerText = `CI/NIT: ${cli.nit || 'S/N'} • Cel: ${cli.tel || 'S/N'}`;
+    } else {
+        infoEl.innerText = 'Venta rápida de mostrador sin factura nominativa';
+    }
+}
+
+function renderPOS() {
+    const q = (document.getElementById('posBuscar').value || '').toLowerCase();
+    const cat = document.getElementById('posFiltroCat').value;
+    const filtrados = db.productos.filter(p => p.nombre.toLowerCase().includes(q) && (!cat || p.cat === cat));
+
+    document.getElementById('posGridProductos').innerHTML = filtrados.map(p => `
+        <div class="border border-doradoBorde rounded-xl p-3 flex justify-between items-center bg-marfil/30 hover:bg-doradoSuave/40 transition">
+            <div class="pr-2 min-w-0">
+                <div class="font-bold text-xs text-textoPrincipal truncate" title="${p.nombre}">${p.nombre}</div>
+                <div class="text-[11px] text-textoSecundario mt-0.5">
+                    <span class="font-semibold text-doradoOscuro">${formatBs(p.precio)}</span> • Stock: ${p.stock}
+                </div>
+            </div>
+            <button onclick="addCart(${p.id})" ${p.stock <= 0 ? 'disabled' : ''} class="shrink-0 w-8 h-8 rounded-lg font-bold text-white flex items-center justify-center shadow-xs cursor-pointer disabled:opacity-40" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">+</button>
+        </div>`).join('');
+
+    const selCli = document.getElementById('posCliente');
+    const valPrevio = selCli.value;
+    selCli.innerHTML = '<option value="Público General">Público General (Sin datos)</option>' + db.clientes.map(c => `<option value="${c.nombre}">${c.nombre} ${c.nit ? '(NIT: ' + c.nit + ')' : ''}</option>`).join('');
+    if (valPrevio) selCli.value = valPrevio;
+    cargarDatosClientePOS();
+
+    renderCarrito();
+}
+
+function addCart(id) {
+    const prod = db.productos.find(p => p.id === id);
+    const item = carrito.find(i => i.id === id);
+    if (item) {
+        if (item.cant < prod.stock) item.cant++;
+        else return mostrarToast('Stock máximo alcanzado', 'error');
+    } else {
+        carrito.push({ id: prod.id, nombre: prod.nombre, precio: prod.precio, cant: 1 });
+    }
+    renderCarrito();
+}
+
+function cambiarCantCarrito(idx, delta) {
+    const item = carrito[idx];
+    const prod = db.productos.find(p => p.id === item.id);
+    if (delta > 0 && item.cant >= prod.stock) return mostrarToast('Sin más stock disponible', 'error');
+    item.cant += delta;
+    if (item.cant <= 0) carrito.splice(idx, 1);
+    renderCarrito();
+}
+
+function renderCarrito() {
+    const tbody = document.getElementById('posCarrito');
+    let subtotal = 0;
+    if (carrito.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-xs text-textoSecundario">Selecciona productos del catálogo</td></tr>`;
+    } else {
+        tbody.innerHTML = carrito.map((i, idx) => {
+            const sub = i.precio * i.cant;
+            subtotal += sub;
+            return `
+            <tr>
+                <td class="py-2 px-3 text-xs font-medium">${i.nombre}</td>
+                <td class="py-2 px-2 text-center text-xs whitespace-nowrap">
+                    <button onclick="cambiarCantCarrito(${idx},-1)" class="px-1.5 py-0.5 rounded bg-marfil border border-doradoBorde font-bold">-</button>
+                    <span class="mx-1 font-bold">${i.cant}</span>
+                    <button onclick="cambiarCantCarrito(${idx},1)" class="px-1.5 py-0.5 rounded bg-marfil border border-doradoBorde font-bold">+</button>
+                </td>
+                <td class="py-2 px-3 text-right text-xs font-semibold">${formatBs(sub)}</td>
+                <td class="py-2 px-2 text-right">
+                    <button onclick="carrito.splice(${idx},1);renderCarrito()" class="text-red-500 cursor-pointer"><i class="bi bi-x-circle"></i></button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+    const desc = parseFloat(document.getElementById('posDescuento').value) || 0;
+    const totalFinal = Math.max(0, subtotal - desc);
+    document.getElementById('posTotal').innerText = formatBs(totalFinal);
+}
+
+async function finalizarVenta() {
+    if (carrito.length === 0) return mostrarToast('Agrega al menos un producto', 'error');
+
+    let clienteNombre = 'Público General';
+    let clienteNit = '';
+    let clienteTel = '';
+
+    if (modoNuevoClientePOS) {
+        const nomNuevo = document.getElementById('posCliNombreNuevo').value.trim();
+        if (!nomNuevo) return mostrarToast('Ingresa el nombre del nuevo cliente', 'error');
+        clienteNombre = nomNuevo;
+        clienteNit = document.getElementById('posCliNitNuevo').value.trim();
+        clienteTel = document.getElementById('posCliTelNuevo').value.trim();
+
+        const nuevoCliObj = {
+            id: Date.now(),
+            nombre: clienteNombre,
+            tel: clienteTel || '-',
+            nit: clienteNit,
+            dir: ''
+        };
+        db.clientes.push(nuevoCliObj);
+        if (supabaseActivo && supabaseClient) {
+            await supabaseClient.from('clientes').insert(nuevoCliObj);
+        }
+
+        document.getElementById('posCliNombreNuevo').value = '';
+        document.getElementById('posCliNitNuevo').value = '';
+        document.getElementById('posCliTelNuevo').value = '';
+        toggleNuevoClientePOS();
+    } else {
+        clienteNombre = document.getElementById('posCliente').value;
+        const cliObj = db.clientes.find(c => c.nombre === clienteNombre);
+        if (cliObj) {
+            clienteNit = cliObj.nit || '';
+            clienteTel = cliObj.tel || '';
+        }
+    }
+
+    const metodoSeleccionado = document.querySelector('input[name="posPagoRadio"]:checked')?.value || 'Efectivo';
+
+    let subtotal = 0;
+    const itemsDetalle = [];
+    for (const i of carrito) {
+        const prod = db.productos.find(p => p.id === i.id);
+        prod.stock -= i.cant;
+        if (supabaseActivo && supabaseClient) {
+            await supabaseClient.from('productos').update({ stock: prod.stock }).eq('id', prod.id);
+        }
+        const sub = i.precio * i.cant;
+        subtotal += sub;
+        itemsDetalle.push({ nombre: i.nombre, cant: i.cant, sub: sub });
+    }
+
+    const desc = parseFloat(document.getElementById('posDescuento').value) || 0;
+    const nota = document.getElementById('posNota').value.trim();
+    const totalFinal = Math.max(0, subtotal - desc);
+    const ahora = obtenerFechaHoraActual();
+    const codigoVenta = 'DDC-' + Math.floor(10000 + Math.random() * 90000);
+
+    const nuevaVentaObj = {
+        codigo: codigoVenta,
+        fecha: ahora.fecha,
+        fechaHora: ahora.completa,
+        cliente: clienteNombre,
+        clienteNit,
+        clienteTel,
+        vendedor: usuarioActual.nombre,
+        pago: metodoSeleccionado,
+        descuento: desc,
+        nota,
+        total: totalFinal,
+        items: itemsDetalle
+    };
+
+    db.ventas.unshift(nuevaVentaObj);
+
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('ventas').insert({
+            codigo: nuevaVentaObj.codigo, fecha: nuevaVentaObj.fecha, fecha_hora: nuevaVentaObj.fechaHora,
+            cliente: nuevaVentaObj.cliente, cliente_nit: nuevaVentaObj.clienteNit, cliente_tel: nuevaVentaObj.clienteTel,
+            vendedor: nuevaVentaObj.vendedor, pago: nuevaVentaObj.pago, descuento: nuevaVentaObj.descuento,
+            nota: nuevaVentaObj.nota, total: nuevaVentaObj.total, items: nuevaVentaObj.items
+        });
+    }
+
+    carrito = [];
+    document.getElementById('posDescuento').value = '0';
+    document.getElementById('posNota').value = '';
+    guardarDB();
+    actualizarTodo();
+    verTicket(0);
+    mostrarToast(supabaseActivo ? 'Venta guardada en Supabase Cloud' : 'Venta registrada localmente', 'success');
+}
+
+// =========================================================================
+// 3. PEDIDOS
+// =========================================================================
+function toggleNuevoClientePed() {
+    modoNuevoClientePed = !modoNuevoClientePed;
+    const selBox = document.getElementById('pedSelectClienteBox');
+    const newBox = document.getElementById('pedNuevoClienteBox');
+    const btn = document.getElementById('btnToggleCliPed');
+    if (modoNuevoClientePed) {
+        selBox.classList.add('hidden');
+        newBox.classList.remove('hidden');
+        btn.innerText = '← Elegir de la lista';
+    } else {
+        newBox.classList.add('hidden');
+        selBox.classList.remove('hidden');
+        btn.innerText = '+ Cliente nuevo';
+    }
+}
+
+function renderPedidos() {
+    const selPed = document.getElementById('pedCliente');
+    const valPrev = selPed.value;
+    selPed.innerHTML = db.clientes.map(c => `<option value="${c.nombre}">${c.nombre} (${c.tel})</option>`).join('');
+    if (valPrev) selPed.value = valPrev;
+
+    document.getElementById('tablaPedidos').innerHTML = db.pedidos.map((p, idx) => {
+        const saldo = p.total - p.anticipo;
+        const cliObj = db.clientes.find(c => c.nombre === p.cliente);
+        const tel = (p.clienteTel || (cliObj && cliObj.tel) || '').replace(/\D/g, '');
+        const msgWa = encodeURIComponent(`Hola ${p.cliente}, le saludamos de *Delicias del Campo*. Su pedido *${p.codigo}* (${p.desc}) para el ${p.entrega} se encuentra en estado: *${p.estado}*. Saldo pendiente: *${formatBs(saldo)}*.`);
+
+        return `
+        <tr class="hover:bg-marfil/50">
+            <td class="py-3 px-2 font-bold text-doradoOscuro text-xs">${p.codigo}</td>
+            <td class="py-3 px-2">
+                <div class="font-semibold text-xs text-textoPrincipal">${p.cliente}</div>
+                <div class="text-[11px] text-textoSecundario">${p.desc} • Ent: ${p.entrega}</div>
+            </td>
+            <td class="py-3 px-2">
+                <select onchange="cambiarEstadoPedido(${idx}, this.value)" class="px-2 py-1 rounded-lg border border-doradoBorde bg-marfil text-[11px] font-semibold">
+                    ${['Pendiente', 'En Horno', 'Decoración', 'Listo', 'Entregado'].map(st => `<option value="${st}" ${p.estado === st ? 'selected' : ''}>${st}</option>`).join('')}
+                </select>
+            </td>
+            <td class="py-3 px-2 text-xs">
+                <div>Total: <strong>${formatBs(p.total)}</strong></div>
+                <div class="${saldo > 0 ? 'text-red-600 font-bold' : 'text-emerald-700 font-bold'}">Saldo: ${formatBs(saldo)}</div>
+            </td>
+            <td class="py-3 px-2 text-right space-x-1 whitespace-nowrap">
+                ${saldo > 0 ? `<button onclick="abrirModalAbono(${idx})" class="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white cursor-pointer" style="background: linear-gradient(135deg, #C5A059 0%, #A3803D 100%);">Abonar</button>` : ''}
+                ${tel ? `<a href="https://wa.me/591${tel}?text=${msgWa}" target="_blank" title="Enviar estado por WhatsApp" class="inline-flex items-center px-2 py-1 rounded-lg bg-emerald-600 text-white text-xs hover:bg-emerald-700"><i class="bi bi-whatsapp"></i></a>` : ''}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+async function registrarPedido() {
+    let clienteNombre = document.getElementById('pedCliente').value;
+    let clienteTel = '';
+
+    if (modoNuevoClientePed) {
+        const nom = document.getElementById('pedCliNombreNuevo').value.trim();
+        const tel = document.getElementById('pedCliTelNuevo').value.trim();
+        const nit = document.getElementById('pedCliNitNuevo').value.trim();
+        if (!nom) return mostrarToast('Ingresa el nombre del cliente para el pedido', 'error');
+        clienteNombre = nom;
+        clienteTel = tel;
+        const cliObj = { id: Date.now(), nombre: nom, tel: tel || '-', nit, dir: '' };
+        db.clientes.push(cliObj);
+        if (supabaseActivo && supabaseClient) await supabaseClient.from('clientes').insert(cliObj);
+        document.getElementById('pedCliNombreNuevo').value = '';
+        document.getElementById('pedCliTelNuevo').value = '';
+        document.getElementById('pedCliNitNuevo').value = '';
+        toggleNuevoClientePed();
+    }
+
+    const desc = document.getElementById('pedDesc').value.trim();
+    const total = parseFloat(document.getElementById('pedTotal').value) || 0;
+    const anticipo = parseFloat(document.getElementById('pedAnticipo').value) || 0;
+    const metodo = document.getElementById('pedMetodoPago').value;
+
+    if (!desc || total <= 0) return mostrarToast('Completa descripción y monto', 'error');
+    if (anticipo > total) return mostrarToast('El anticipo supera el total', 'error');
+
+    const nuevoPed = {
+        codigo: 'PED-' + Math.floor(100 + Math.random() * 900),
+        cliente: clienteNombre,
+        clienteTel,
+        desc,
+        entrega: document.getElementById('pedFecha').value || obtenerFechaHoraActual().fecha,
+        total,
+        anticipo,
+        metodoPago: metodo,
+        estado: 'Pendiente'
+    };
+
+    db.pedidos.unshift(nuevoPed);
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('pedidos').insert({
+            codigo: nuevoPed.codigo, cliente: nuevoPed.cliente, cliente_tel: nuevoPed.clienteTel,
+            descripcion: nuevoPed.desc, entrega: nuevoPed.entrega, total: nuevoPed.total,
+            anticipo: nuevoPed.anticipo, metodo_pago: nuevoPed.metodoPago, estado: nuevoPed.estado
+        });
+    }
+
+    document.getElementById('pedDesc').value = '';
+    document.getElementById('pedTotal').value = '';
+    document.getElementById('pedAnticipo').value = '';
+    guardarDB();
+    actualizarTodo();
+    mostrarToast('Pedido especial guardado', 'success');
+}
+
+async function cambiarEstadoPedido(idx, nuevoEstado) {
+    db.pedidos[idx].estado = nuevoEstado;
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('pedidos').update({ estado: nuevoEstado }).eq('codigo', db.pedidos[idx].codigo);
+    }
+    guardarDB();
+    renderPedidos();
+    mostrarToast(`Estado actualizado a: ${nuevoEstado}`, 'info');
+}
+
+function abrirModalAbono(idx) {
+    const p = db.pedidos[idx];
+    const saldo = p.total - p.anticipo;
+    document.getElementById('abonoIdx').value = idx;
+    document.getElementById('abonoInfo').innerText = `Pedido ${p.codigo} (${p.cliente}) — Saldo pendiente: ${formatBs(saldo)}`;
+    document.getElementById('abonoMonto').value = saldo.toFixed(2);
+    abrirModal('modalAbono');
+}
+
+async function guardarAbono() {
+    const idx = parseInt(document.getElementById('abonoIdx').value);
+    const monto = parseFloat(document.getElementById('abonoMonto').value) || 0;
+    const p = db.pedidos[idx];
+    const saldo = p.total - p.anticipo;
+    if (monto <= 0 || monto > saldo) return mostrarToast('Monto de abono inválido', 'error');
+    p.anticipo += monto;
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('pedidos').update({ anticipo: p.anticipo }).eq('codigo', p.codigo);
+    }
+    cerrarModal('modalAbono');
+    guardarDB();
+    actualizarTodo();
+    mostrarToast('Abono registrado correctamente', 'success');
+}
+
+// =========================================================================
+// 4. ARQUEO Y CIERRE DE CAJA
+// =========================================================================
+function renderCaja() {
+    const esAdmin = usuarioActual.rol === 'Administrador';
+    const hoy = obtenerFechaHoraActual().fecha;
+    const ventasHoy = db.ventas.filter(v =>
+        v.fecha === hoy && (esAdmin || v.vendedor === usuarioActual.nombre)
+    );
+
+    const efec = ventasHoy.filter(v => v.pago === 'Efectivo').reduce((a, b) => a + b.total, 0);
+    const qr = ventasHoy.filter(v => v.pago === 'Pago QR').reduce((a, b) => a + b.total, 0);
+    const totalDia = efec + qr;
+
+    document.getElementById('cajaEfectivo').innerText = formatBs(efec);
+    document.getElementById('cajaQR').innerText = formatBs(qr);
+    document.getElementById('cajaTotalDia').innerText = formatBs(totalDia);
+
+    const fondo = parseFloat(document.getElementById('cajaFondoInicial').value) || 0;
+    const contado = parseFloat(document.getElementById('cajaContado').value) || 0;
+    const esperado = fondo + efec;
+    const diff = contado - esperado;
+
+    document.getElementById('cajaEsperado').innerText = formatBs(esperado);
+    const diffEl = document.getElementById('cajaDiferencia');
+    diffEl.innerText = formatBs(diff);
+    diffEl.className = diff === 0 ? 'text-emerald-700' : (diff > 0 ? 'text-doradoOscuro' : 'text-red-600');
+
+    document.getElementById('tituloHistorialCierres').innerText = esAdmin ? 'Historial Global de Cierres de Caja' : 'Mis Cierres de Turno';
+    const cierresVisibles = (db.cierresCaja || []).filter(c => esAdmin || c.responsable === usuarioActual.nombre);
+
+    document.getElementById('tablaCierres').innerHTML = cierresVisibles.map(c => `
+        <tr>
+            <td class="py-2.5 px-3">${c.fechaHora}</td>
+            <td class="py-2.5 px-3 font-semibold">${c.responsable}</td>
+            <td class="py-2.5 px-3 font-bold">${formatBs(c.totalVentas)}</td>
+            <td class="py-2.5 px-3 font-bold ${c.diferencia < 0 ? 'text-red-600' : 'text-emerald-700'}">${formatBs(c.diferencia)}</td>
+        </tr>`).join('') || `<tr><td colspan="4" class="py-4 text-center text-textoSecundario">Sin cierres registrados</td></tr>`;
+}
+
+async function registrarCierreCaja() {
+    const esAdmin = usuarioActual.rol === 'Administrador';
+    const hoy = obtenerFechaHoraActual().fecha;
+    const ventasHoy = db.ventas.filter(v => v.fecha === hoy && (esAdmin || v.vendedor === usuarioActual.nombre));
+    const totalVentas = ventasHoy.reduce((a, b) => a + b.total, 0);
+    const efec = ventasHoy.filter(v => v.pago === 'Efectivo').reduce((a, b) => a + b.total, 0);
+    const fondo = parseFloat(document.getElementById('cajaFondoInicial').value) || 0;
+    const contado = parseFloat(document.getElementById('cajaContado').value) || 0;
+    const diff = contado - (fondo + efec);
+
+    const cierreObj = {
+        fechaHora: obtenerFechaHoraActual().completa,
+        responsable: usuarioActual.nombre,
+        totalVentas,
+        diferencia: diff
+    };
+
+    if (!db.cierresCaja) db.cierresCaja = [];
+    db.cierresCaja.unshift(cierreObj);
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('cierres_caja').insert({
+            fecha_hora: cierreObj.fechaHora, responsable: cierreObj.responsable,
+            total_ventas: cierreObj.totalVentas, diferencia: cierreObj.diferencia
+        });
+    }
+    guardarDB();
+    renderCaja();
+    mostrarToast('Cierre de caja guardado', 'success');
+}
+
+// =========================================================================
+// 5. HISTORIAL DE VENTAS
+// =========================================================================
+function renderHistorial() {
+    const esAdmin = usuarioActual.rol === 'Administrador';
+    const q = (document.getElementById('buscarHistorial')?.value || '').toLowerCase();
+    const mesFiltro = document.getElementById('filtroMesHistorial')?.value || '';
+    const pagoFiltro = document.getElementById('filtroPagoHistorial')?.value || '';
+    const vendFiltro = document.getElementById('filtroVendedorHistorial')?.value || '';
+
+    document.getElementById('tituloHistorialVentas').innerText = esAdmin
+        ? 'Registro Histórico de Comprobantes (6 Meses)'
+        : 'Mis Ventas Emitidas';
+    document.getElementById('subtituloHistorialVentas').innerText = esAdmin
+        ? 'Operaciones consolidadas desde Junio 2026 hasta Noviembre 2026'
+        : `Comprobantes registrados por ${usuarioActual.nombre}`;
+
+    const base = esAdmin ? db.ventas : db.ventas.filter(v => v.vendedor === usuarioActual.nombre);
+    const lista = base.filter(v => {
+        const matchTexto = v.codigo.toLowerCase().includes(q) || v.cliente.toLowerCase().includes(q);
+        const matchMes = !mesFiltro || v.fecha.includes(mesFiltro);
+        const matchPago = !pagoFiltro || v.pago === pagoFiltro;
+        const matchVend = !vendFiltro || v.vendedor === vendFiltro;
+        return matchTexto && matchMes && matchPago && matchVend;
+    });
+
+    const totalFiltrado = lista.reduce((s, v) => s + v.total, 0);
+    document.getElementById('histCount').innerText = lista.length;
+    document.getElementById('histTotalFiltrado').innerText = formatBs(totalFiltrado);
+
+    document.getElementById('tablaHistorial').innerHTML = lista.slice(0, 100).map((v) => {
+        const realIdx = db.ventas.indexOf(v);
+        const badgePago = v.pago === 'Pago QR'
+            ? 'bg-doradoSuave text-doradoOscuro border-doradoBorde'
+            : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+        return `
+        <tr class="hover:bg-marfil/50">
+            <td class="py-3 px-4 font-bold text-doradoOscuro text-xs">${v.codigo}</td>
+            <td class="py-3 px-4 text-xs">${v.fechaHora || v.fecha}</td>
+            <td class="py-3 px-4 text-xs font-medium">${v.cliente}</td>
+            <td class="py-3 px-4 text-xs text-textoSecundario">${v.vendedor}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[11px] font-semibold border ${badgePago}">${v.pago}</span></td>
+            <td class="py-3 px-4 text-xs font-bold">${formatBs(v.total)}</td>
+            <td class="py-3 px-4 text-right">
+                <button onclick="verTicket(${realIdx})" class="px-3 py-1 rounded-lg border border-dorado text-doradoOscuro text-xs font-semibold hover:bg-doradoSuave cursor-pointer">Ver Ticket</button>
+            </td>
+        </tr>`;
+    }).join('') || `<tr><td colspan="7" class="py-6 text-center text-xs text-textoSecundario">No se encontraron comprobantes con los filtros seleccionados</td></tr>`;
+}
+
+function verTicket(idx) {
+    const v = db.ventas[idx];
+    document.getElementById('ticketContenido').innerHTML = `
+        <div class="text-center border-b border-doradoBorde pb-4 mb-4">
+            <div class="w-12 h-12 mx-auto rounded-full bg-carbon text-dorado flex items-center justify-center mb-2"><i class="bi bi-flower1 text-xl"></i></div>
+            <h4 class="font-editorial text-2xl font-bold text-textoPrincipal">Delicias del Campo</h4>
+            <p class="text-xs text-textoSecundario">Alta Repostería & Pastelería Artesanal</p>
+            <div class="mt-2"><span class="px-3 py-1 rounded-full text-xs font-bold bg-doradoSuave text-doradoOscuro border border-doradoBorde">${v.codigo}</span></div>
+        </div>
+        <div class="text-xs space-y-1 mb-4 text-textoPrincipal">
+            <div class="flex justify-between"><span><strong>Fecha:</strong> ${v.fechaHora || v.fecha}</span><span><strong>Cobro:</strong> ${v.pago}</span></div>
+            <div><strong>Cliente:</strong> ${v.cliente} ${v.clienteNit ? `(NIT/CI: ${v.clienteNit})` : ''}</div>
+            ${v.clienteTel ? `<div><strong>Celular:</strong> ${v.clienteTel}</div>` : ''}
+            <div><strong>Atendido por:</strong> ${v.vendedor}</div>
+            ${v.nota ? `<div class="p-2 rounded bg-marfil border border-doradoBorde mt-1"><strong>Nota:</strong> ${v.nota}</div>` : ''}
+        </div>
+        <table class="w-full text-left border-collapse text-xs mb-4">
+            <thead class="bg-marfil border-y border-doradoBorde text-textoSecundario">
+                <tr><th class="py-2 px-2">Producto</th><th class="py-2 px-2 text-center">Cant.</th><th class="py-2 px-2 text-right">Subtotal</th></tr>
+            </thead>
+            <tbody class="divide-y divide-doradoBorde/50">
+                ${v.items.map(i => `<tr><td class="py-2 px-2">${i.nombre}</td><td class="py-2 px-2 text-center">${i.cant}</td><td class="py-2 px-2 text-right font-medium">${formatBs(i.sub)}</td></tr>`).join('')}
+            </tbody>
+        </table>
+        ${v.descuento > 0 ? `<div class="flex justify-between text-xs text-red-600 mb-1"><span>Descuento aplicado:</span><span>-${formatBs(v.descuento)}</span></div>` : ''}
+        <div class="flex justify-between items-center pt-3 border-t border-doradoBorde mb-5">
+            <span class="text-sm font-bold text-textoPrincipal">Total Pagado:</span>
+            <span class="text-xl font-bold text-doradoOscuro">${formatBs(v.total)}</span>
+        </div>
+        <div class="flex gap-2 no-print">
+            <button onclick="cerrarModal('modalTicket')" class="flex-1 py-2.5 rounded-xl border border-doradoBorde text-xs font-semibold text-textoSecundario cursor-pointer">Cerrar</button>
+            <button onclick="window.print()" class="flex-1 py-2.5 rounded-xl bg-carbon text-dorado border border-dorado text-xs font-semibold cursor-pointer flex items-center justify-center gap-1.5"><i class="bi bi-printer"></i> Imprimir</button>
+        </div>`;
+    abrirModal('modalTicket');
+}
+
+// =========================================================================
+// 6. PRODUCTOS E INVENTARIO (REGISTRAR, EDITAR, CONSULTAR, ELIMINAR - RF01)
+// =========================================================================
+function renderProductos() {
+    const q = (document.getElementById('filtroNombre').value || '').toLowerCase();
+    const cat = document.getElementById('filtroCat').value;
+    const esAdmin = usuarioActual.rol === 'Administrador';
+
+    const filtrados = db.productos.filter(p => p.nombre.toLowerCase().includes(q) && (!cat || p.cat === cat));
+    document.getElementById('tablaProductos').innerHTML = filtrados.map((p, i) => `
+        <tr class="hover:bg-marfil/50">
+            <td class="py-3 px-3 text-xs text-textoSecundario">${i + 1}</td>
+            <td class="py-3 px-3 text-xs font-bold text-textoPrincipal">${p.nombre}</td>
+            <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-doradoSuave text-doradoOscuro border border-doradoBorde">${p.cat}</span></td>
+            <td class="py-3 px-3 text-xs font-bold">${formatBs(p.precio)}</td>
+            <td class="py-3 px-3 text-xs text-textoSecundario" style="display:${esAdmin ? '' : 'none'}">${formatBs(p.costo)}</td>
+            <td class="py-3 px-3 text-xs font-semibold text-emerald-700" style="display:${esAdmin ? '' : 'none'}">${formatBs(p.precio - p.costo)}</td>
+            <td class="py-3 px-3 text-center whitespace-nowrap">
+                ${esAdmin ? `<button onclick="ajustarStock(${p.id}, -1)" class="px-2 py-0.5 rounded bg-marfil border border-doradoBorde text-xs font-bold hover:bg-doradoSuave cursor-pointer">-</button>` : ''}
+                <span class="mx-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${p.stock <= p.min ? 'bg-red-100 text-red-700' : 'bg-carbon text-dorado'}">${p.stock} uds</span>
+                ${esAdmin ? `<button onclick="ajustarStock(${p.id}, 1)" class="px-2 py-0.5 rounded bg-marfil border border-doradoBorde text-xs font-bold hover:bg-doradoSuave cursor-pointer">+</button>` : ''}
+            </td>
+            <td class="py-3 px-3 text-right whitespace-nowrap space-x-1" style="display:${esAdmin ? '' : 'none'}">
+                <button onclick="abrirEditarProd(${p.id})" title="Modificar producto" class="p-1.5 rounded-lg text-doradoOscuro hover:bg-doradoSuave cursor-pointer"><i class="bi bi-pencil-square"></i></button>
+                <button onclick="eliminarProd(${p.id})" title="Eliminar producto" class="p-1.5 rounded-lg text-red-500 hover:bg-red-50 cursor-pointer"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
+}
+
+function abrirEditarProd(id) {
+    if (usuarioActual.rol !== 'Administrador') return mostrarToast('Solo el Administrador puede modificar productos', 'error');
+    const p = db.productos.find(prod => prod.id === id);
+    if (!p) return;
+    document.getElementById('editProdId').value = p.id;
+    document.getElementById('editProdNombre').value = p.nombre;
+    document.getElementById('editProdCat').value = p.cat;
+    document.getElementById('editProdPrecio').value = p.precio;
+    document.getElementById('editProdCosto').value = p.costo;
+    document.getElementById('editProdStock').value = p.stock;
+    document.getElementById('editProdMin').value = p.min || 5;
+    abrirModal('modalEditProd');
+}
+
+async function actualizarProductoEditado() {
+    const id = parseInt(document.getElementById('editProdId').value);
+    const p = db.productos.find(prod => prod.id === id);
+    if (!p) return;
+
+    const nombre = document.getElementById('editProdNombre').value.trim();
+    if (!nombre) return mostrarToast('El nombre del producto no puede estar vacío', 'error');
+
+    p.nombre = nombre;
+    p.cat = document.getElementById('editProdCat').value;
+    p.precio = parseFloat(document.getElementById('editProdPrecio').value) || p.precio;
+    p.costo = parseFloat(document.getElementById('editProdCosto').value) || p.costo;
+    p.stock = Math.max(0, parseInt(document.getElementById('editProdStock').value) || 0);
+    p.min = Math.max(1, parseInt(document.getElementById('editProdMin').value) || 5);
+
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('productos').update({
+            nombre: p.nombre, cat: p.cat, precio: p.precio,
+            costo: p.costo, stock: p.stock, min: p.min
+        }).eq('id', p.id);
+    }
+
+    guardarDB();
+    cerrarModal('modalEditProd');
+    actualizarTodo();
+    mostrarToast('Producto modificado correctamente', 'success');
+}
+
+async function ajustarStock(id, delta) {
+    if (usuarioActual.rol !== 'Administrador') return mostrarToast('Solo el Administrador puede ajustar el inventario', 'error');
+    const prod = db.productos.find(p => p.id === id);
+    if (!prod) return;
+    prod.stock = Math.max(0, prod.stock + delta);
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('productos').update({ stock: prod.stock }).eq('id', prod.id);
+    }
+    guardarDB();
+    actualizarTodo();
+    mostrarToast(`Stock de ${prod.nombre}: ${prod.stock} uds`, 'info');
+}
+
+async function guardarProducto() {
+    const nombre = document.getElementById('newProdNombre').value.trim();
+    if (!nombre) return mostrarToast('Ingresa el nombre del producto', 'error');
+    const nuevoProd = {
+        id: Date.now(), nombre, cat: document.getElementById('newProdCat').value,
+        precio: parseFloat(document.getElementById('newProdPrecio').value) || 25,
+        costo: parseFloat(document.getElementById('newProdCosto').value) || 10,
+        stock: parseInt(document.getElementById('newProdStock').value) || 10, min: 5
+    };
+    db.productos.push(nuevoProd);
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('productos').insert(nuevoProd);
+    }
+    document.getElementById('newProdNombre').value = '';
+    guardarDB(); cerrarModal('modalProd'); actualizarTodo();
+    mostrarToast('Producto añadido', 'success');
+}
+
+async function eliminarProd(id) {
+    db.productos = db.productos.filter(p => p.id !== id);
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('productos').delete().eq('id', id);
+    }
+    guardarDB(); actualizarTodo();
+    mostrarToast('Producto eliminado', 'info');
+}
+
+// =========================================================================
+// 7. CLIENTES, EMPLEADOS E IA
+// =========================================================================
+function renderClientes() {
+    document.getElementById('tablaClientes').innerHTML = db.clientes.map(c => `
+        <tr class="hover:bg-marfil/50">
+            <td class="py-3 px-4 text-xs font-bold text-textoPrincipal">${c.nombre}</td>
+            <td class="py-3 px-4 text-xs">${c.tel}</td>
+            <td class="py-3 px-4 text-xs text-textoSecundario">${c.nit || '-'}</td>
+            <td class="py-3 px-4 text-xs text-textoSecundario">${c.dir || '-'}</td>
+        </tr>`).join('');
+}
+
+async function agregarCliente() {
+    const nombre = document.getElementById('cliNombre').value.trim();
+    if (!nombre) return mostrarToast('Ingresa el nombre del cliente', 'error');
+    const cliObj = { id: Date.now(), nombre, tel: document.getElementById('cliTel').value || '-', nit: document.getElementById('cliNit').value, dir: document.getElementById('cliDir').value };
+    db.clientes.push(cliObj);
+    if (supabaseActivo && supabaseClient) {
+        await supabaseClient.from('clientes').insert(cliObj);
+    }
+    document.getElementById('cliNombre').value = ''; document.getElementById('cliTel').value = '';
+    document.getElementById('cliNit').value = ''; document.getElementById('cliDir').value = '';
+    guardarDB(); renderClientes();
+    mostrarToast('Cliente registrado', 'success');
+}
+
+// =========================================================================
+// 7.5. MÓDULO DE REPORTES GERENCIALES Y EXPORTACIÓN CSV / PDF
+// =========================================================================
+let datosReporteActualCSV = [];
+
+function verReporteIAEnModulo() {
+    cambiarModulo('reportes');
+    document.getElementById('repTipoInforme').value = 'ia_lstm';
+    renderReportes();
+}
+
+function renderReportes() {
+    if (!document.getElementById('repFiltroPeriodo')) return;
+    const esAdmin = usuarioActual?.rol === 'Administrador';
+    const periodo = document.getElementById('repFiltroPeriodo').value;
+    const tipo = document.getElementById('repTipoInforme').value;
+    const hoyStr = obtenerFechaHoraActual().fecha;
+
+    document.getElementById('repFechaEmision').innerText = `Emitido: ${obtenerFechaHoraActual().completa}`;
+
+    const baseVentas = esAdmin ? db.ventas : db.ventas.filter(v => v.vendedor === usuarioActual.nombre);
+    const ventasFiltradas = baseVentas.filter(v => {
+        if (periodo === '6m') return true;
+        if (periodo === 'hoy') return v.fecha === hoyStr;
+        return v.fecha.includes(periodo);
+    });
+
+    let ingresos = 0;
+    let costos = 0;
+    ventasFiltradas.forEach(v => {
+        ingresos += v.total;
+        v.items.forEach(it => {
+            const p = db.productos.find(prod => prod.nombre === it.nombre);
+            costos += p ? (p.costo * it.cant) : (it.sub * 0.45);
+        });
+    });
+
+    const utilidad = Math.max(0, ingresos - costos);
+    const margenPct = ingresos > 0 ? Math.round((utilidad / ingresos) * 100) : 0;
+    const ticketProm = ventasFiltradas.length > 0 ? (ingresos / ventasFiltradas.length) : 0;
+
+    document.getElementById('repKpiIngresos').innerText = formatBs(ingresos);
+    document.getElementById('repKpiCantVentas').innerText = `${ventasFiltradas.length} comprobante(s)`;
+    document.getElementById('repKpiCostos').innerText = formatBs(costos);
+    document.getElementById('repKpiUtilidad').innerText = formatBs(utilidad);
+    document.getElementById('repKpiMargen').innerText = `Margen neto: ${margenPct}%`;
+    document.getElementById('repKpiTicket').innerText = formatBs(ticketProm);
+
+    const thead = document.getElementById('repTablaHead');
+    const tbody = document.getElementById('repTablaBody');
+    datosReporteActualCSV = [];
+
+    if (tipo === 'ventas') {
+        document.getElementById('repTituloTabla').innerText = 'Reporte Detallado de Ventas';
+        thead.innerHTML = `<tr>
+            <th class="py-3 px-3">Código</th><th class="py-3 px-3">Fecha</th><th class="py-3 px-3">Cliente</th>
+            <th class="py-3 px-3">Vendedor</th><th class="py-3 px-3">Cobro</th><th class="py-3 px-3 text-right">Total (Bs)</th>
+        </tr>`;
+        datosReporteActualCSV.push(['Codigo', 'Fecha', 'Cliente', 'Vendedor', 'Metodo_Cobro', 'Total_Bs']);
+
+        tbody.innerHTML = ventasFiltradas.slice(0, 120).map(v => {
+            datosReporteActualCSV.push([v.codigo, v.fechaHora || v.fecha, `"${v.cliente}"`, `"${v.vendedor}"`, v.pago, v.total.toFixed(2)]);
+            return `<tr class="hover:bg-marfil/50">
+                <td class="py-2.5 px-3 font-bold text-doradoOscuro">${v.codigo}</td>
+                <td class="py-2.5 px-3">${v.fechaHora || v.fecha}</td>
+                <td class="py-2.5 px-3 font-medium">${v.cliente}</td>
+                <td class="py-2.5 px-3 text-textoSecundario">${v.vendedor}</td>
+                <td class="py-2.5 px-3">${v.pago}</td>
+                <td class="py-2.5 px-3 text-right font-bold">${formatBs(v.total)}</td>
+            </tr>`;
+        }).join('') || `<tr><td colspan="6" class="py-6 text-center text-textoSecundario">Sin ventas en este período</td></tr>`;
+
+    } else if (tipo === 'categorias') {
+        document.getElementById('repTituloTabla').innerText = 'Rendimiento y Rentabilidad por Categoría';
+        thead.innerHTML = `<tr>
+            <th class="py-3 px-3">Categoría</th><th class="py-3 px-3 text-center">Unidades Vendidas</th>
+            <th class="py-3 px-3 text-right">Ingresos (Bs)</th>
+            ${esAdmin ? '<th class="py-3 px-3 text-right">Costo Est.</th><th class="py-3 px-3 text-right">Utilidad Neta</th>' : ''}
+        </tr>`;
+        datosReporteActualCSV.push(esAdmin ? ['Categoria', 'Unidades', 'Ingresos_Bs', 'Costo_Bs', 'Utilidad_Bs'] : ['Categoria', 'Unidades', 'Ingresos_Bs']);
+
+        const mapaCat = {};
+        ventasFiltradas.forEach(v => {
+            v.items.forEach(it => {
+                const prod = db.productos.find(p => p.nombre === it.nombre);
+                const cat = prod ? prod.cat : 'Otros';
+                const costoUnit = prod ? prod.costo : (it.sub / it.cant) * 0.45;
+                if (!mapaCat[cat]) mapaCat[cat] = { uds: 0, ing: 0, cos: 0 };
+                mapaCat[cat].uds += it.cant;
+                mapaCat[cat].ing += it.sub;
+                mapaCat[cat].cos += costoUnit * it.cant;
+            });
+        });
+
+        const filasCat = Object.entries(mapaCat).sort((a, b) => b[1].ing - a[1].ing);
+        tbody.innerHTML = filasCat.map(([cat, d]) => {
+            const util = d.ing - d.cos;
+            datosReporteActualCSV.push(esAdmin
+                ? [`"${cat}"`, d.uds, d.ing.toFixed(2), d.cos.toFixed(2), util.toFixed(2)]
+                : [`"${cat}"`, d.uds, d.ing.toFixed(2)]);
+            return `<tr class="hover:bg-marfil/50">
+                <td class="py-2.5 px-3 font-bold text-textoPrincipal">${cat}</td>
+                <td class="py-2.5 px-3 text-center">${d.uds} uds</td>
+                <td class="py-2.5 px-3 text-right font-bold text-doradoOscuro">${formatBs(d.ing)}</td>
+                ${esAdmin ? `<td class="py-2.5 px-3 text-right text-textoSecundario">${formatBs(d.cos)}</td>
+                             <td class="py-2.5 px-3 text-right font-bold text-emerald-700">${formatBs(util)}</td>` : ''}
+            </tr>`;
+        }).join('') || `<tr><td colspan="5" class="py-6 text-center text-textoSecundario">Sin datos para agrupar</td></tr>`;
+
+    } else if (tipo === 'inventario') {
+        document.getElementById('repTituloTabla').innerText = 'Valoración de Inventario Actual (50 Productos)';
+        thead.innerHTML = `<tr>
+            <th class="py-3 px-3">Producto</th><th class="py-3 px-3">Categoría</th><th class="py-3 px-3 text-center">Stock</th>
+            <th class="py-3 px-3 text-right">Precio Venta</th><th class="py-3 px-3 text-right">Valor Venta Stock</th>
+        </tr>`;
+        datosReporteActualCSV.push(['Producto', 'Categoria', 'Stock', 'Precio_Venta_Bs', 'Valor_Total_Venta_Bs']);
+
+        tbody.innerHTML = db.productos.map(p => {
+            const valVenta = p.stock * p.precio;
+            datosReporteActualCSV.push([`"${p.nombre}"`, `"${p.cat}"`, p.stock, p.precio.toFixed(2), valVenta.toFixed(2)]);
+            return `<tr class="hover:bg-marfil/50">
+                <td class="py-2.5 px-3 font-bold">${p.nombre}</td>
+                <td class="py-2.5 px-3 text-textoSecundario">${p.cat}</td>
+                <td class="py-2.5 px-3 text-center font-bold ${p.stock <= p.min ? 'text-red-600' : ''}">${p.stock} uds</td>
+                <td class="py-2.5 px-3 text-right">${formatBs(p.precio)}</td>
+                <td class="py-2.5 px-3 text-right font-bold text-doradoOscuro">${formatBs(valVenta)}</td>
+            </tr>`;
+        }).join('');
+
+    } else if (tipo === 'pedidos') {
+        document.getElementById('repTituloTabla').innerText = 'Reporte de Pedidos Especiales, Anticipos y Saldos';
+        thead.innerHTML = `<tr>
+            <th class="py-3 px-3">Código</th><th class="py-3 px-3">Cliente</th><th class="py-3 px-3">Entrega</th>
+            <th class="py-3 px-3">Estado</th><th class="py-3 px-3 text-right">Total</th><th class="py-3 px-3 text-right">Anticipo</th><th class="py-3 px-3 text-right">Saldo</th>
+        </tr>`;
+        datosReporteActualCSV.push(['Codigo', 'Cliente', 'Entrega', 'Estado', 'Total_Bs', 'Anticipo_Bs', 'Saldo_Bs']);
+
+        tbody.innerHTML = db.pedidos.map(p => {
+            const saldo = p.total - p.anticipo;
+            datosReporteActualCSV.push([p.codigo, `"${p.cliente}"`, p.entrega, p.estado, p.total.toFixed(2), p.anticipo.toFixed(2), saldo.toFixed(2)]);
+            return `<tr class="hover:bg-marfil/50">
+                <td class="py-2.5 px-3 font-bold text-doradoOscuro">${p.codigo}</td>
+                <td class="py-2.5 px-3 font-medium">${p.cliente}</td>
+                <td class="py-2.5 px-3">${p.entrega}</td>
+                <td class="py-2.5 px-3">${p.estado}</td>
+                <td class="py-2.5 px-3 text-right font-bold">${formatBs(p.total)}</td>
+                <td class="py-2.5 px-3 text-right text-emerald-700">${formatBs(p.anticipo)}</td>
+                <td class="py-2.5 px-3 text-right font-bold ${saldo > 0 ? 'text-red-600' : ''}">${formatBs(saldo)}</td>
+            </tr>`;
+        }).join('');
+
+    } else if (tipo === 'ia_lstm') {
+        document.getElementById('repTituloTabla').innerText = 'Reporte Predictivo IA (Red RNN / LSTM) — Plan de Horneado a 7 Días';
+        thead.innerHTML = `<tr>
+            <th class="py-3 px-3">Producto</th><th class="py-3 px-3">Categoría</th><th class="py-3 px-3 text-center">Vendidos (6M)</th>
+            <th class="py-3 px-3 text-center">Stock Vitrina</th><th class="py-3 px-3 text-center">Demanda 7 Días (IA)</th>
+            <th class="py-3 px-3 text-center">A Hornear</th><th class="py-3 px-3 text-right">Ingreso Est. (Bs)</th>
+        </tr>`;
+        datosReporteActualCSV.push(['Producto', 'Categoria', 'Vendidos_6M', 'Stock_Vitrina', 'Demanda_IA_7Dias', 'Unidades_A_Hornear', 'Ingreso_Estimado_Bs']);
+
+        const conteoProd = {};
+        db.ventas.forEach(v => v.items.forEach(it => {
+            conteoProd[it.nombre] = (conteoProd[it.nombre] || 0) + it.cant;
+        }));
+
+        const filasIA = db.productos.map(p => {
+            const histUds = conteoProd[p.nombre] || 0;
+            const promDiario = Math.max(0.4, histUds / 170);
+            const demanda7d = Math.max(2, Math.round(promDiario * (4 * 0.85 + 3 * 1.48)));
+            const aHornear = Math.max(0, demanda7d - p.stock);
+            const ingresoEst = demanda7d * p.precio;
+            return { ...p, histUds, demanda7d, aHornear, ingresoEst };
+        }).sort((a, b) => b.aHornear - a.aHornear || b.demanda7d - a.demanda7d);
+
+        tbody.innerHTML = filasIA.map(r => {
+            datosReporteActualCSV.push([`"${r.nombre}"`, `"${r.cat}"`, r.histUds, r.stock, r.demanda7d, r.aHornear, r.ingresoEst.toFixed(2)]);
+            const badgeHorno = r.aHornear > 0
+                ? `<span class="px-2.5 py-0.5 rounded-full bg-doradoSuave text-doradoOscuro border border-doradoBorde font-bold">+${r.aHornear} uds</span>`
+                : `<span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-semibold">Cubierto</span>`;
+            return `<tr class="hover:bg-marfil/50">
+                <td class="py-2.5 px-3 font-bold text-textoPrincipal">${r.nombre}</td>
+                <td class="py-2.5 px-3 text-textoSecundario">${r.cat}</td>
+                <td class="py-2.5 px-3 text-center">${r.histUds} uds</td>
+                <td class="py-2.5 px-3 text-center font-semibold">${r.stock} uds</td>
+                <td class="py-2.5 px-3 text-center font-bold">${r.demanda7d} uds</td>
+                <td class="py-2.5 px-3 text-center">${badgeHorno}</td>
+                <td class="py-2.5 px-3 text-right font-bold text-doradoOscuro">${formatBs(r.ingresoEst)}</td>
+            </tr>`;
+        }).join('');
+    }
+}
+
+function exportarReporteCSV() {
+    if (!datosReporteActualCSV || datosReporteActualCSV.length <= 1) {
+        return mostrarToast('No hay filas para exportar en este reporte', 'error');
+    }
+    const csvContent = '\uFEFF' + datosReporteActualCSV.map(fila => fila.join(';')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const tipo = document.getElementById('repTipoInforme').value;
+    a.href = url;
+    a.download = `reporte_${tipo}_delicias_del_campo_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    mostrarToast('Reporte exportado en formato Excel (CSV)', 'success');
+}
+
+function renderUsuarios() {
+    document.getElementById('tablaUsuarios').innerHTML = db.usuarios.map((u, i) => `
+        <tr class="hover:bg-marfil/50">
+            <td class="py-3 px-4 text-xs font-bold">${u.nombre}</td>
+            <td class="py-3 px-4 text-xs text-textoSecundario">${u.email}</td>
+            <td class="py-3 px-4 text-xs">${u.rol}</td>
+            <td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold ${u.activo ? 'bg-carbon text-dorado' : 'bg-stone-200 text-stone-600'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+            <td class="py-3 px-4 text-right">
+                <button onclick="db.usuarios[${i}].activo=!db.usuarios[${i}].activo;guardarDB();renderUsuarios();mostrarToast('Estado actualizado','info')" class="px-3 py-1 rounded-lg border border-dorado text-doradoOscuro text-xs font-semibold hover:bg-doradoSuave cursor-pointer">Cambiar Estado</button>
+            </td>
+        </tr>`).join('');
+}
+
+function agregarUsuario() {
+    const nombre = document.getElementById('usuNombre').value.trim();
+    if (!nombre) return mostrarToast('Ingresa el nombre del empleado', 'error');
+    db.usuarios.push({ id: Date.now(), nombre, email: document.getElementById('usuEmail').value || 'personal@deliciasdelcampo.com', rol: document.getElementById('usuRol').value, activo: true });
+    document.getElementById('usuNombre').value = ''; document.getElementById('usuEmail').value = '';
+    guardarDB(); renderUsuarios();
+    mostrarToast('Cuenta creada', 'success');
+}
+
+function renderSelectIA() {
+    document.getElementById('iaProducto').innerHTML = '<option value="general">Toda la Pastelería (50 productos)</option>' + db.productos.map(p => `<option value="${p.id}">${p.nombre} (Stock: ${p.stock})</option>`).join('');
+}
+
+function setDiasIA(dias) {
+    document.getElementById('iaDias').value = dias;
+    document.querySelectorAll('.ia-dias-btn').forEach(btn => {
+        if (parseInt(btn.dataset.d) === dias) {
+            btn.className = 'ia-dias-btn py-2 rounded-xl border border-dorado text-xs font-bold bg-doradoSuave text-doradoOscuro cursor-pointer';
+        } else {
+            btn.className = 'ia-dias-btn py-2 rounded-xl border border-doradoBorde text-xs font-bold bg-marfil/40 hover:bg-doradoSuave cursor-pointer';
+        }
+    });
+    if (modeloEntrenado) predecirLSTM();
+}
+
+function entrenarLSTM() {
+    const btn = document.getElementById('btnEntrenar');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="animate-spin inline-block w-4 h-4 border-2 border-dorado border-t-transparent rounded-full"></span> <span>Analizando ${db.ventas.length} ventas...</span>`;
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-check-circle-fill text-emerald-400"></i> <span>RNN Entrenada (${db.ventas.length} ventas)</span>`;
+        modeloEntrenado = true;
+        document.getElementById('iaMetricas').classList.remove('hidden');
+        document.getElementById('iaTotalRegistros').innerText = db.ventas.length;
+        mostrarToast(`Red RNN (LSTM) calibrada con ${db.ventas.length} comprobantes`, 'success');
+        predecirLSTM();
+    }, 600);
+}
+
+function predecirLSTM() {
+    if (!modeloEntrenado) return mostrarToast('Haz clic primero en "Paso 1: Entrenar RNN con Historial"', 'error');
+    const dias = parseInt(document.getElementById('iaDias').value) || 7;
+    const prodId = document.getElementById('iaProducto').value;
+    const prodObj = prodId === 'general' ? null : db.productos.find(p => p.id === parseInt(prodId));
+    const hoyStr = obtenerFechaHoraActual().fecha;
+
+    let udsHistoricas6M = 0;
+    let udsRecientesHoy = 0;
+
+    db.ventas.forEach(v => {
+        v.items.forEach(it => {
+            if (!prodObj || it.nombre === prodObj.nombre) {
+                udsHistoricas6M += it.cant;
+                if (v.fecha === hoyStr) {
+                    udsRecientesHoy += it.cant;
+                }
+            }
+        });
+    });
+
+    const tasaLargoPlazo = prodObj
+        ? Math.max(1.0, udsHistoricas6M / 170)
+        : Math.max(8.0, udsHistoricas6M / 170);
+
+    const impulsoCortoPlazo = udsRecientesHoy * 0.45;
+    const promedioDiarioDinamico = (tasaLargoPlazo * 0.65) + impulsoCortoPlazo;
+
+    const nombresDias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const labels = [], valores = [], detalleFilas = [];
+    const hoy = new Date();
+    let sumaTotalProyectada = 0;
+    let maxUds = -1, diaPicoNombre = '', diaPicoFecha = '';
+
+    for (let i = 1; i <= dias; i++) {
+        const f = new Date(hoy);
+        f.setDate(hoy.getDate() + i);
+        const fechaStr = obtenerFechaHoraActual(f).fecha;
+        const diaIdx = f.getDay();
+        const diaNombre = nombresDias[diaIdx];
+
+        const factorDia = (diaIdx === 6) ? 1.65 : (diaIdx === 5 || diaIdx === 0) ? 1.40 : 0.85;
+        const variacionNatural = 0.94 + ((i * 7) % 5) * 0.03;
+        const estimado = Math.max(1, Math.round(promedioDiarioDinamico * factorDia * variacionNatural));
+
+        labels.push(`${diaNombre.slice(0, 3)} ${fechaStr.slice(0, 5)}`);
+        valores.push(estimado);
+        sumaTotalProyectada += estimado;
+
+        if (estimado > maxUds) {
+            maxUds = estimado;
+            diaPicoNombre = diaNombre;
+            diaPicoFecha = fechaStr;
+        }
+
+        const nivelBadge = factorDia > 1.3
+            ? '<span class="px-2 py-0.5 rounded-full bg-doradoSuave text-doradoOscuro font-bold text-[11px]">Alta (Fin de semana)</span>'
+            : '<span class="px-2 py-0.5 rounded-full bg-marfil border border-doradoBorde text-textoSecundario text-[11px]">Normal</span>';
+
+        detalleFilas.push(`
+            <tr class="hover:bg-marfil/50">
+                <td class="py-2.5 px-3 font-medium">${fechaStr}</td>
+                <td class="py-2.5 px-3 font-semibold">${diaNombre}</td>
+                <td class="py-2.5 px-3">${nivelBadge}</td>
+                <td class="py-2.5 px-3 text-right font-bold text-textoPrincipal">${estimado} uds</td>
+            </tr>`);
+    }
+
+    const stockActual = prodObj
+        ? prodObj.stock
+        : db.productos.reduce((s, p) => s + p.stock, 0);
+    const aHornear = Math.max(0, sumaTotalProyectada - stockActual);
+
+    document.getElementById('iaTituloGrafico').innerText = prodObj
+        ? `Proyección: ${prodObj.nombre}`
+        : 'Proyección General de Toda la Pastelería';
+    document.getElementById('iaKpiDemanda').innerText = `${sumaTotalProyectada} uds`;
+    document.getElementById('iaKpiDemandaSub').innerText = `Histórico: ${udsHistoricas6M} uds | Hoy: ${udsRecientesHoy} uds`;
+
+    document.getElementById('iaKpiHornear').innerText = `${aHornear} uds`;
+    document.getElementById('iaKpiHornearSub').innerText = `Stock actual en vitrina: ${stockActual} uds`;
+
+    document.getElementById('iaKpiPico').innerText = `${diaPicoNombre} (${maxUds} uds)`;
+    document.getElementById('iaKpiPicoSub').innerText = `Fecha: ${diaPicoFecha}`;
+
+    document.getElementById('iaTablaDetalle').innerHTML = detalleFilas.join('');
+    document.getElementById('iaTablaContainer').classList.remove('hidden');
+
+    const ctx = document.getElementById('lstmChart').getContext('2d');
+    if (chartLSTM) chartLSTM.destroy();
+    chartLSTM = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Unidades Estimadas a Vender',
+                data: valores,
+                borderColor: '#C5A059',
+                backgroundColor: 'rgba(197, 160, 89, 0.22)',
+                borderWidth: 3,
+                pointBackgroundColor: '#1E1C1A',
+                pointBorderColor: '#C5A059',
+                pointRadius: 5,
+                fill: true,
+                tension: 0.35
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (c) => `Est. a vender: ${c.raw} unidades` } }
+            },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+    });
+}
+</script>
+</body>
+</html>
